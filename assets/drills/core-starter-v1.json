@@ -1,0 +1,85 @@
+{
+  "schemaVersion": 1,
+  "packId": "core-starter-v1",
+  "name": "Core Starter Pack",
+  "drills": [
+    {
+      "id": "gate-putting-3ft",
+      "name": "3ft Gate Putting",
+      "category": "putting",
+      "estimatedMinutes": 10,
+      "instructions": [
+        "Place a gate just wider than the putter head about 6 inches in front of the ball.",
+        "Stroke 10 putts from 3 feet through the gate into the hole.",
+        "Log each make or miss."
+      ],
+      "scoring": {
+        "type": "makes_out_of",
+        "attempts": 10,
+        "unit": "putts"
+      }
+    },
+    {
+      "id": "lag-putting-20ft",
+      "name": "20ft Lag Putting",
+      "category": "putting",
+      "estimatedMinutes": 12,
+      "instructions": [
+        "From about 20 feet, lag putts to finish inside a 3-foot circle around the hole.",
+        "Hit 8 putts and count how many finish inside the circle."
+      ],
+      "scoring": {
+        "type": "makes_out_of",
+        "attempts": 8,
+        "unit": "putts"
+      }
+    },
+    {
+      "id": "chip-to-circle",
+      "name": "Chip to the Circle",
+      "category": "short_game",
+      "estimatedMinutes": 15,
+      "instructions": [
+        "Pick a landing spot and chip to a 6-foot circle around the hole.",
+        "Hit 12 chips from varied lies around the green.",
+        "Count how many finish in the circle."
+      ],
+      "scoring": {
+        "type": "makes_out_of",
+        "attempts": 12,
+        "unit": "chips"
+      }
+    },
+    {
+      "id": "alignment-stick-swings",
+      "name": "Alignment Stick Swings",
+      "category": "full_swing",
+      "estimatedMinutes": 10,
+      "instructions": [
+        "Lay an alignment stick on your target line.",
+        "Make smooth rehearsal swings focusing on path.",
+        "Log total quality reps completed."
+      ],
+      "scoring": {
+        "type": "reps",
+        "target": 20,
+        "unit": "swings"
+      }
+    },
+    {
+      "id": "tempo-score-blocks",
+      "name": "Tempo Score Blocks",
+      "category": "full_swing",
+      "estimatedMinutes": 15,
+      "instructions": [
+        "Hit balls in sets of 5 focusing on smooth tempo.",
+        "Score each set from 1–5 for tempo quality.",
+        "Add the set scores together."
+      ],
+      "scoring": {
+        "type": "score_total",
+        "unit": "tempo points"
+      }
+    }
+  ]
+}

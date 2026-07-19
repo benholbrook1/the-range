@@ -32,7 +32,7 @@ flowchart LR
 | --- | --- |
 | App framework | Expo (managed) + TypeScript |
 | Routing | Expo Router (file-based) |
-| Local database | SQLite via `expo-sqlite` |
+| Local database | SQLite via `expo-sqlite` on iOS/Android; in-memory `AppStore` fallback on web (WASM bundling limitation) |
 | Drill pack validation | Schema validation at load time (e.g. Zod) |
 | Local file pick (packs) | `expo-document-picker` (or equivalent) — offline file import only |
 | UI | React Native + shared components under `src/components` |
