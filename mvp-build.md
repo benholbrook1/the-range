@@ -12,7 +12,7 @@ Do not invent auth, paywalls, cloud sync, or network-dependent workflows. Keep m
 2. After each major step: commit with a clear message.
 3. Run unit tests once the test harness exists (Step 3 onward); fix failures before moving on.
 4. Treat [design.md](design.md) as binding for UI — no gradients or listed cliches.
-5. When every checkbox in **MVP done** is checked, the build phase is complete.
+5. When every checkbox in **MVP acceptance** (Step 14) is checked, the build phase is complete.
 
 ---
 
@@ -48,6 +48,7 @@ Do not invent auth, paywalls, cloud sync, or network-dependent workflows. Keep m
 - [ ] Configure Jest for Expo/TypeScript (`npm test` works)
 - [ ] Add a trivial smoke test so CI/local runs are green
 - [ ] Document the test command in README
+- [ ] Plan DB test strategy early (mock `expo-sqlite` or inject query layer) so Step 7 service tests can run in Node — see architecture Testing feasibility note
 
 Unit tests are required for MVP — see [architecture.md](architecture.md) Testing section. Add tests in the same PR/commit batch as the code they cover from Step 4 onward.
 
@@ -83,17 +84,18 @@ Unit tests are required for MVP — see [architecture.md](architecture.md) Testi
 
 ## Step 7 — Drill and session services (+ tests)
 
-- [ ] `services/drills`: list, get by id, search, filter by category
+- [ ] `services/drills`: list, get by id, search, filter by category; `getPersonalBest(drillId)` for Drill Detail
 - [ ] `services/sessions`: start, resume active, log attempt, complete (notes), list history, get detail
 - [ ] Persist attempts immediately so app kill does not lose progress
-- [ ] **Unit tests:** session lifecycle (start → log → complete); resume active; drill list/filter helpers
+- [ ] Unfinished sessions stay `active` until resumed or completed (no separate abandon flow required for MVP)
+- [ ] **Unit tests:** session lifecycle (start → log → complete); resume active; drill list/filter; personal best from completed sessions
 
 ---
 
 ## Step 8 — Home screen
 
 - [ ] Feature: `features/home` — brand-forward layout per design + implementation
-- [ ] Primary CTA to start / browse drills
+- [ ] Primary CTA opens Drills (or repeats last-practiced drill — no recommendation engine)
 - [ ] Show resume banner if an active session exists
 - [ ] Optional: last practiced + Repeat
 - [ ] Thin route in `app/(tabs)/index.tsx`
@@ -104,7 +106,7 @@ Unit tests are required for MVP — see [architecture.md](architecture.md) Testi
 
 - [ ] `features/drills`: searchable list, simple category filters (not pill clusters)
 - [ ] Drill Detail: instructions, criteria, personal best/last score, Start CTA
-- [ ] Affordance to add/import a drill pack (local file)
+- [ ] Affordance to add/import a drill pack via local file picker (shared `services/packs`; same flow as More)
 - [ ] Routes: `drills` tab + `drill/[id]`
 
 ---
@@ -121,18 +123,18 @@ Unit tests are required for MVP — see [architecture.md](architecture.md) Testi
 
 ## Step 11 — History + Session Detail
 
-- [ ] Chronological session list with filter
-- [ ] Session Detail: breakdown, notes, Repeat drill CTA
+- [ ] Chronological session list with filter (drill and/or category)
+- [ ] Session Detail: breakdown, duration from started/ended, notes, Repeat drill CTA
 - [ ] Routes: `history` tab + `session/[id]`
 
 ---
 
 ## Step 12 — More / Settings
 
-- [ ] Local display name, units/defaults as needed
-- [ ] Manage installed packs; add pack from file
+- [ ] Optional local display name; units/defaults stub only if quick — not a blocker
+- [ ] Manage installed packs; add pack from file (same service as Drills import)
 - [ ] About / version
-- [ ] Clear local data (destructive, confirmed)
+- [ ] Clear local data (destructive, confirmed) then re-seed bundled packs
 - [ ] Profile export/import: stub or “Coming soon” only (not full MVP feature)
 
 ---
@@ -170,6 +172,30 @@ All must be true:
 - E2E device automation
 - Dark mode as default
 - Cloud catalogs or sync
+
+---
+
+## Alignment check (planning docs)
+
+These plans are intended to be consistent. If something conflicts during build, prefer in this order:
+
+1. [mvp-build.md](mvp-build.md) scope checkboxes (what ships)
+2. [implementation.md](implementation.md) product behavior
+3. [architecture.md](architecture.md) structure and testing
+4. [design.md](design.md) visual treatment
+
+**Resolved defaults for MVP:**
+
+| Topic | Decision |
+| --- | --- |
+| Home “suggested” drill | No engine — CTA → Drills, or Repeat last practiced |
+| List meta | Category + estimate (not a separate “skill focus” field) |
+| Pack import | Allowed from Drills and More; one `services/packs` implementation |
+| Session abandon | Not required — unfinished stays `active` |
+| Settings units | Optional stub; display name is enough |
+| Clear data | Wipe user progress and re-seed bundled packs |
+| Fonts | Free Expo-loadable geometric sans unless a license exists |
+| Service unit tests | Pure domain + injectable/mockable DB layer so Jest runs in Node |
 
 ---
 

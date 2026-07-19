@@ -37,7 +37,7 @@ Profile import/export (when built) lives under More, not as onboarding.
 **Contents:**
 
 - Greeting / app name
-- Primary CTA → pick a drill or jump into a suggested one
+- Primary CTA → opens the Drills library (or starts the last-practiced drill if one exists — no separate recommendation engine for MVP)
 - Optional: last-practiced drill + “Repeat”
 - Optional: unfinished session resume banner
 
@@ -45,14 +45,14 @@ Profile import/export (when built) lives under More, not as onboarding.
 
 **Job:** Browse and open drills loaded into the local catalog.
 
-**Layout feel:** Search plus simple category filters (Putting, Short Game, Full Swing, and similar), then a clean list of drills (name, skill focus, estimated time). Not a dense marketplace.
+**Layout feel:** Search plus simple category filters (Putting, Short Game, Full Swing, and similar), then a clean list of drills (name, category, estimated time). Not a dense marketplace.
 
 **Contents:**
 
 - Search
 - Category filter
 - Drill list from loaded packs
-- Affordance to add or import a drill pack
+- Affordance to add or import a drill pack (same install flow as More → manage packs; both call the shared packs service)
 
 ### 3. Drill Detail
 

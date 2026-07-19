@@ -34,6 +34,7 @@ flowchart LR
 | Routing | Expo Router (file-based) |
 | Local database | SQLite via `expo-sqlite` |
 | Drill pack validation | Schema validation at load time (e.g. Zod) |
+| Local file pick (packs) | `expo-document-picker` (or equivalent) — offline file import only |
 | UI | React Native + shared components under `src/components` |
 | Persistence boundary | All reads/writes go through `src/db` + `src/services` — screens never open SQL directly |
 
@@ -181,11 +182,11 @@ Core entities stored locally:
 
 - **Pack** — installed drill pack metadata (id, name, schema version, source).
 - **Drill** — definition from a pack (id, pack id, name, category, instructions, scoring config, estimate).
-- **Session** — a practice run (drill id, status: active/completed/abandoned, started/ended, notes).
+- **Session** — a practice run (drill id, status: `active` | `completed`, started/ended, notes). An `abandoned` status is optional later; MVP can treat “left unfinished” as remaining `active` until resumed or completed.
 - **Attempt** — logged steps within a session (index, payload matching scoring type, timestamp).
-- **Settings** — key/value local prefs (display name, units, etc.).
+- **Settings** — key/value local prefs. MVP minimum: optional display name; units/defaults may be a stub key or omitted until needed.
 
-Sessions and attempts are the source of truth for History and personal bests. Drill rows are replaced/updated when packs are installed or upgraded; historical sessions keep enough denormalized drill name/score summary to remain readable if a pack is removed later.
+Sessions and attempts are the source of truth for History and personal bests (`getPersonalBest(drillId)` derived from completed sessions). Drill rows are replaced/updated when packs are installed or upgraded; historical sessions keep enough denormalized drill name/score summary to remain readable if a pack is removed later.
 
 ## Drill packs
 
@@ -215,7 +216,7 @@ Scoring interpretation and summary math live in `domain/scoring.ts`. Input contr
 | Resume | Home reads active session; continue same row |
 | History | query completed sessions; Session Detail loads attempts |
 | Add pack | pick local file → validate → install transaction |
-| Settings / clear data | local prefs; destructive clear wipes user tables (re-seed packs as designed) |
+| Settings / clear data | local prefs; destructive clear wipes user sessions/attempts/settings and re-seeds bundled packs so the library is usable again |
 
 No workflow above waits on a server.
 
@@ -256,12 +257,15 @@ Unit tests are **in scope for MVP**, not deferred. They protect offline domain l
 - Tests live next to code or under `__tests__/` mirroring `src/domain` and `src/services`
 - Run with `npm test` (or project equivalent); must pass before calling MVP done
 
+**Feasibility note (SQLite in Jest):** Domain and pack-schema tests stay pure (no native DB). For service tests, prefer a small DB test helper: either Expo’s supported Jest setup for `expo-sqlite`, or inject a query layer that can run against an in-memory/Node SQLite stand-in in tests. Do not block MVP on device-only E2E; mock native modules if needed so `npm test` runs in CI/Node.
+
 ### Minimum coverage targets for MVP
 
 1. All scoring types (`makes_out_of`, `reps`, `score_total`) — summarize and edge cases (empty, all miss, perfect)
 2. Pack schema validation — happy path + malformed payload
-3. Session lifecycle — start → log attempts → complete; resume active session; abandon if supported
+3. Session lifecycle — start → log attempts → complete; resume active session (abandon not required)
 4. Drill listing/filter helpers used by the library screen
+5. Personal best derivation from completed sessions (used by Drill Detail)
 
 ### Explicitly out of MVP testing
 

@@ -59,7 +59,7 @@ Expressive but simple — two families max.
 
 | Role | Direction |
 | --- | --- |
-| **Display / brand** | A confident grotesque or soft geometric sans with character (e.g. something in the spirit of *General Sans*, *Satoshi*, or *Neue Haas Grotesk*). Used for “The Range” and screen titles. |
+| **Display / brand** | A confident grotesque or soft geometric sans with character. Prefer a **freely licensed** face loadable via Expo (e.g. something in the spirit of *DM Sans*, *Manrope*, or *Space Grotesk*). Paid faces (*General Sans*, *Satoshi*, etc.) are fine only if licensed for the project. Used for “The Range” and screen titles. |
 | **Body / UI** | Same family at regular/medium weights, or a closely related workhorse sans for dense lists. |
 | **Mono (optional)** | Tabular figures for scores and timers only. |
 
