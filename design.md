@@ -147,3 +147,4 @@ Define tokens in `src/theme` (see [architecture.md](architecture.md)). Screens c
 
 - Product / screens: [implementation.md](implementation.md)
 - Technical architecture: [architecture.md](architecture.md)
+- MVP build sequence: [mvp-build.md](mvp-build.md)

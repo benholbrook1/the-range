@@ -236,11 +236,38 @@ On root layout mount:
 
 Failure to open the DB is a hard local error screen — not a login or network retry wall.
 
-## Testing and quality boundaries (lightweight)
+## Testing (MVP)
 
-- Domain pure functions: unit-testable without React or DB.
-- Services: testable against an in-memory or test SQLite when we add tests.
-- Screens: keep logic out so UI stays shallow.
+Unit tests are **in scope for MVP**, not deferred. They protect offline domain logic and pack/session behavior so screens stay thin.
+
+### Scope
+
+| Layer | Test? | Focus |
+| --- | --- | --- |
+| `src/domain/` | **Yes — required** | Pure scoring math, summaries, formatters, category helpers |
+| Pack validation | **Yes — required** | Accept valid packs; reject invalid / wrong `schemaVersion` |
+| `src/services/` | **Yes — required for core flows** | Start/resume/complete session, log attempts, list/filter drills, install pack (against test SQLite) |
+| `src/db/queries/` | Prefer via services | Covered indirectly; add direct query tests only when logic is non-trivial |
+| Screens / components | **No for MVP** | Keep UI shallow; no snapshot farm unless a control is highly stateful |
+
+### Tooling
+
+- Jest (Expo’s default test runner) + TypeScript
+- Tests live next to code or under `__tests__/` mirroring `src/domain` and `src/services`
+- Run with `npm test` (or project equivalent); must pass before calling MVP done
+
+### Minimum coverage targets for MVP
+
+1. All scoring types (`makes_out_of`, `reps`, `score_total`) — summarize and edge cases (empty, all miss, perfect)
+2. Pack schema validation — happy path + malformed payload
+3. Session lifecycle — start → log attempts → complete; resume active session; abandon if supported
+4. Drill listing/filter helpers used by the library screen
+
+### Explicitly out of MVP testing
+
+- Full device E2E / Detox
+- Visual regression
+- Network/API mocks (there is no API)
 
 ## Explicitly out of architecture (MVP)
 
@@ -253,4 +280,5 @@ Failure to open the DB is a hard local error screen — not a login or network r
 
 - Product and screen design: [implementation.md](implementation.md)
 - Visual design: [design.md](design.md)
+- MVP build sequence (follow this to ship): [mvp-build.md](mvp-build.md)
 - This file is the technical reference for the build phase

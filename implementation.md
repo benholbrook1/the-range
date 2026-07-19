@@ -144,3 +144,4 @@ Drills ship as versioned content packs the app can load. Screens read pack defin
 
 - Technical architecture (stack, layering, helpers, data model, offline workflows): [architecture.md](architecture.md)
 - Visual design (color, type, layout, anti-cliche rules): [design.md](design.md)
+- MVP build sequence (follow during build phase): [mvp-build.md](mvp-build.md)
