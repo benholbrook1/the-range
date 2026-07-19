@@ -142,4 +142,4 @@ Drills ship as versioned content packs the app can load. Screens read pack defin
 
 ## Related docs
 
-- Architecture details (stack, data model, schemas, project layout) will live in a separate architecture document when that phase begins.
+- Technical architecture (stack, layering, helpers, data model, offline workflows): [architecture.md](architecture.md)
