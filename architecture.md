@@ -252,4 +252,5 @@ Failure to open the DB is a hard local error screen — not a login or network r
 ## Related docs
 
 - Product and screen design: [implementation.md](implementation.md)
+- Visual design: [design.md](design.md)
 - This file is the technical reference for the build phase

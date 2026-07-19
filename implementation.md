@@ -143,3 +143,4 @@ Drills ship as versioned content packs the app can load. Screens read pack defin
 ## Related docs
 
 - Technical architecture (stack, layering, helpers, data model, offline workflows): [architecture.md](architecture.md)
+- Visual design (color, type, layout, anti-cliche rules): [design.md](design.md)
