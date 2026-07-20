@@ -1,17 +1,11 @@
-import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import React from 'react';
+import { StyleSheet, Text } from 'react-native';
 
 import { colors } from '@/src/theme';
 
-function TabIcon({
-  name,
-  color,
-}: {
-  name: keyof typeof Ionicons.glyphMap;
-  color: string;
-}) {
-  return <Ionicons name={name} size={22} color={color} />;
+function TabGlyph({ label, color }: { label: string; color: string }) {
+  return <Text style={[styles.icon, { color }]}>{label}</Text>;
 }
 
 export default function TabLayout() {
@@ -35,41 +29,38 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'Home',
-          tabBarIcon: ({ color }) => (
-            <TabIcon name="home-outline" color={String(color)} />
-          ),
+          tabBarIcon: ({ color }) => <TabGlyph label="⌂" color={String(color)} />,
         }}
       />
       <Tabs.Screen
         name="drills"
         options={{
           title: 'Drills',
-          tabBarIcon: ({ color }) => (
-            <TabIcon name="golf-outline" color={String(color)} />
-          ),
+          tabBarIcon: ({ color }) => <TabGlyph label="◎" color={String(color)} />,
         }}
       />
       <Tabs.Screen
         name="history"
         options={{
           title: 'History',
-          tabBarIcon: ({ color }) => (
-            <TabIcon name="time-outline" color={String(color)} />
-          ),
+          tabBarIcon: ({ color }) => <TabGlyph label="◷" color={String(color)} />,
         }}
       />
       <Tabs.Screen
         name="more"
         options={{
           title: 'More',
-          tabBarIcon: ({ color }) => (
-            <TabIcon
-              name="ellipsis-horizontal-outline"
-              color={String(color)}
-            />
-          ),
+          tabBarIcon: ({ color }) => <TabGlyph label="···" color={String(color)} />,
         }}
       />
     </Tabs>
   );
 }
+
+const styles = StyleSheet.create({
+  icon: {
+    fontSize: 18,
+    lineHeight: 22,
+    fontFamily: 'DMSans_500Medium',
+  },
+});
