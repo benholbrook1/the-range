@@ -9,7 +9,11 @@ import { useStore } from '@/src/db/StoreContext';
 import { categoryLabel } from '@/src/domain/categories';
 import { describeScoring } from '@/src/domain/scoring';
 import type { Drill } from '@/src/domain/types';
-import { getDrill, getPersonalBest } from '@/src/services/drills';
+import {
+  getDrill,
+  getLastScore,
+  getPersonalBest,
+} from '@/src/services/drills';
 import {
   getActiveSession,
   startSession,
@@ -22,6 +26,7 @@ export function DrillDetailScreen() {
   const router = useRouter();
   const [drill, setDrill] = useState<Drill | null>(null);
   const [best, setBest] = useState<string | null>(null);
+  const [last, setLast] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);
 
   const load = useCallback(async () => {
@@ -29,14 +34,30 @@ export function DrillDetailScreen() {
     const d = await getDrill(store, id);
     setDrill(d);
     if (d) {
-      const pb = await getPersonalBest(store, d.id);
+      const [pb, ls] = await Promise.all([
+        getPersonalBest(store, d.id),
+        getLastScore(store, d.id),
+      ]);
       setBest(pb ? pb.label : null);
+      setLast(ls ? ls.label : null);
     }
   }, [id, store]);
 
   useEffect(() => {
     void load();
   }, [load]);
+
+  const begin = useCallback(
+    async (discardActive?: boolean) => {
+      if (!drill) return;
+      const session = await startSession(store, drill.id, { discardActive });
+      router.push({
+        pathname: '/session/active',
+        params: { sessionId: session.id },
+      });
+    },
+    [drill, store, router],
+  );
 
   const onStart = useCallback(async () => {
     if (!drill) return;
@@ -46,7 +67,7 @@ export function DrillDetailScreen() {
       if (active) {
         Alert.alert(
           'Session in progress',
-          'Continue your active session, or complete it before starting another.',
+          `“${active.drillName}” is still active. Continue it, or discard it and start this drill.`,
           [
             {
               text: 'Continue',
@@ -56,16 +77,19 @@ export function DrillDetailScreen() {
                   params: { sessionId: active.id },
                 }),
             },
+            {
+              text: 'Discard & start',
+              style: 'destructive',
+              onPress: () => {
+                void begin(true);
+              },
+            },
             { text: 'Cancel', style: 'cancel' },
           ],
         );
         return;
       }
-      const session = await startSession(store, drill.id);
-      router.push({
-        pathname: '/session/active',
-        params: { sessionId: session.id },
-      });
+      await begin(false);
     } catch (e) {
       Alert.alert(
         'Could not start',
@@ -74,7 +98,7 @@ export function DrillDetailScreen() {
     } finally {
       setStarting(false);
     }
-  }, [drill, store, router]);
+  }, [drill, store, router, begin]);
 
   if (!drill) {
     return (
@@ -107,6 +131,9 @@ export function DrillDetailScreen() {
 
       <Text muted style={styles.best}>
         {best ? `Personal best: ${best}` : 'No personal best yet'}
+      </Text>
+      <Text muted>
+        {last ? `Last score: ${last}` : 'No previous score yet'}
       </Text>
 
       <View style={styles.cta}>

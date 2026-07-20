@@ -67,6 +67,14 @@ export type Attempt = {
   createdAt: string;
 };
 
+export type DistanceUnits = 'yards' | 'meters';
+
 export type Settings = {
   displayName: string;
+  units: DistanceUnits;
+};
+
+export const DEFAULT_SETTINGS: Settings = {
+  displayName: '',
+  units: 'yards',
 };

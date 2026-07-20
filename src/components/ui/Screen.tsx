@@ -1,26 +1,55 @@
-import React from 'react';
-import { ScrollView, StyleSheet, View, type ViewProps } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import {
+  Animated,
+  ScrollView,
+  StyleSheet,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { colors, spacing } from '@/src/theme';
 
-type Props = ViewProps & {
+type Props = {
   scroll?: boolean;
   children: React.ReactNode;
+  style?: StyleProp<ViewStyle>;
 };
 
-export function Screen({ scroll, children, style, ...rest }: Props) {
+export function Screen({ scroll, children, style }: Props) {
+  const opacity = useRef(new Animated.Value(0)).current;
+  const translateY = useRef(new Animated.Value(8)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(opacity, {
+        toValue: 1,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+      Animated.timing(translateY, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [opacity, translateY]);
+
+  const animatedStyle = { opacity, transform: [{ translateY }] };
+
   const body = scroll ? (
-    <ScrollView
-      contentContainerStyle={[styles.content, style]}
-      keyboardShouldPersistTaps="handled"
-    >
-      {children}
-    </ScrollView>
+    <Animated.View style={[styles.flex, animatedStyle]}>
+      <ScrollView
+        contentContainerStyle={[styles.content, style]}
+        keyboardShouldPersistTaps="handled"
+      >
+        {children}
+      </ScrollView>
+    </Animated.View>
   ) : (
-    <View style={[styles.content, styles.flex, style]} {...rest}>
+    <Animated.View style={[styles.content, styles.flex, animatedStyle, style]}>
       {children}
-    </View>
+    </Animated.View>
   );
 
   return (

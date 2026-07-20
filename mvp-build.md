@@ -196,7 +196,7 @@ These plans are intended to be consistent. If something conflicts during build, 
 | Clear data | Wipe user progress and re-seed bundled packs |
 | Fonts | Free Expo-loadable geometric sans unless a license exists |
 | Service unit tests | Pure domain + injectable/mockable DB layer so Jest runs in Node |
-| Web persistence | In-memory store on web; SQLite on native devices |
+| Web persistence | AsyncStorage-backed memory store on web; SQLite on native devices |
 
 ---
 

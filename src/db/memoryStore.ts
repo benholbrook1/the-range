@@ -7,6 +7,7 @@ import type {
   SessionStatus,
   Settings,
 } from '@/src/domain/types';
+import { DEFAULT_SETTINGS } from '@/src/domain/types';
 
 export type CreateSessionInput = {
   id: string;
@@ -16,10 +17,19 @@ export type CreateSessionInput = {
   startedAt: string;
 };
 
+export type StoreSnapshot = {
+  packs: Pack[];
+  drills: Drill[];
+  sessions: Session[];
+  attempts: Attempt[];
+  settings: Settings;
+};
+
 export type AppStore = {
   listPacks(): Promise<Pack[]>;
   getPack(id: string): Promise<Pack | null>;
   upsertPack(pack: Pack): Promise<void>;
+  removePack(packId: string): Promise<void>;
   replaceDrillsForPack(packId: string, drills: Drill[]): Promise<void>;
   listDrills(opts?: {
     category?: Drill['category'] | 'all';
@@ -43,6 +53,7 @@ export type AppStore = {
       >
     >,
   ): Promise<Session>;
+  deleteSession(id: string): Promise<void>;
   addAttempt(input: {
     id: string;
     sessionId: string;
@@ -51,21 +62,40 @@ export type AppStore = {
     createdAt: string;
   }): Promise<Attempt>;
   listAttempts(sessionId: string): Promise<Attempt[]>;
+  removeLastAttempt(sessionId: string): Promise<Attempt | null>;
   getSettings(): Promise<Settings>;
-  setDisplayName(name: string): Promise<Settings>;
+  updateSettings(patch: Partial<Settings>): Promise<Settings>;
   clearUserData(): Promise<void>;
+  exportSnapshot(): Promise<StoreSnapshot>;
+  importSnapshot(snapshot: StoreSnapshot): Promise<void>;
 };
 
 function clone<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T;
 }
 
-export function createMemoryStore(): AppStore {
-  let packs: Pack[] = [];
-  let drills: Drill[] = [];
-  let sessions: Session[] = [];
-  let attempts: Attempt[] = [];
-  let settings: Settings = { displayName: '' };
+export function createMemoryStore(
+  initial?: Partial<StoreSnapshot>,
+  onChange?: (snapshot: StoreSnapshot) => void,
+): AppStore {
+  let packs: Pack[] = clone(initial?.packs ?? []);
+  let drills: Drill[] = clone(initial?.drills ?? []);
+  let sessions: Session[] = clone(initial?.sessions ?? []);
+  let attempts: Attempt[] = clone(initial?.attempts ?? []);
+  let settings: Settings = {
+    ...DEFAULT_SETTINGS,
+    ...(initial?.settings ?? {}),
+  };
+
+  function notify() {
+    onChange?.({
+      packs: clone(packs),
+      drills: clone(drills),
+      sessions: clone(sessions),
+      attempts: clone(attempts),
+      settings: clone(settings),
+    });
+  }
 
   return {
     async listPacks() {
@@ -78,9 +108,16 @@ export function createMemoryStore(): AppStore {
       const idx = packs.findIndex((p) => p.id === pack.id);
       if (idx >= 0) packs[idx] = clone(pack);
       else packs.push(clone(pack));
+      notify();
+    },
+    async removePack(packId) {
+      packs = packs.filter((p) => p.id !== packId);
+      drills = drills.filter((d) => d.packId !== packId);
+      notify();
     },
     async replaceDrillsForPack(packId, next) {
       drills = drills.filter((d) => d.packId !== packId).concat(clone(next));
+      notify();
     },
     async listDrills(opts = {}) {
       let rows = drills.slice();
@@ -114,6 +151,7 @@ export function createMemoryStore(): AppStore {
         summaryValue: null,
       };
       sessions.unshift(clone(session));
+      notify();
       return clone(session);
     },
     async getSession(id) {
@@ -140,7 +178,13 @@ export function createMemoryStore(): AppStore {
       const idx = sessions.findIndex((s) => s.id === id);
       if (idx < 0) throw new Error(`Session not found: ${id}`);
       sessions[idx] = { ...sessions[idx], ...patch };
+      notify();
       return clone(sessions[idx]);
+    },
+    async deleteSession(id) {
+      sessions = sessions.filter((s) => s.id !== id);
+      attempts = attempts.filter((a) => a.sessionId !== id);
+      notify();
     },
     async addAttempt(input) {
       const attempt: Attempt = {
@@ -151,6 +195,7 @@ export function createMemoryStore(): AppStore {
         createdAt: input.createdAt,
       };
       attempts.push(clone(attempt));
+      notify();
       return clone(attempt);
     },
     async listAttempts(sessionId) {
@@ -160,11 +205,22 @@ export function createMemoryStore(): AppStore {
           .sort((a, b) => a.index - b.index),
       );
     },
+    async removeLastAttempt(sessionId) {
+      const sessionAttempts = attempts
+        .filter((a) => a.sessionId === sessionId)
+        .sort((a, b) => a.index - b.index);
+      const last = sessionAttempts[sessionAttempts.length - 1];
+      if (!last) return null;
+      attempts = attempts.filter((a) => a.id !== last.id);
+      notify();
+      return clone(last);
+    },
     async getSettings() {
       return clone(settings);
     },
-    async setDisplayName(name) {
-      settings = { displayName: name };
+    async updateSettings(patch) {
+      settings = { ...settings, ...patch };
+      notify();
       return clone(settings);
     },
     async clearUserData() {
@@ -172,7 +228,25 @@ export function createMemoryStore(): AppStore {
       drills = [];
       sessions = [];
       attempts = [];
-      settings = { displayName: '' };
+      settings = { ...DEFAULT_SETTINGS };
+      notify();
+    },
+    async exportSnapshot() {
+      return {
+        packs: clone(packs),
+        drills: clone(drills),
+        sessions: clone(sessions),
+        attempts: clone(attempts),
+        settings: clone(settings),
+      };
+    },
+    async importSnapshot(snapshot) {
+      packs = clone(snapshot.packs);
+      drills = clone(snapshot.drills);
+      sessions = clone(snapshot.sessions);
+      attempts = clone(snapshot.attempts);
+      settings = { ...DEFAULT_SETTINGS, ...clone(snapshot.settings) };
+      notify();
     },
   };
 }

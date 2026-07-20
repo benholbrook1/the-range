@@ -143,6 +143,12 @@ export function createSqliteStore(db: SqlDb): AppStore {
         pack.installedAt,
       );
     },
+    async removePack(packId) {
+      await db.withTransactionAsync(async () => {
+        await db.runAsync('DELETE FROM drills WHERE pack_id = ?', packId);
+        await db.runAsync('DELETE FROM packs WHERE id = ?', packId);
+      });
+    },
     async replaceDrillsForPack(packId, drills) {
       await db.withTransactionAsync(async () => {
         await db.runAsync('DELETE FROM drills WHERE pack_id = ?', packId);
@@ -244,6 +250,12 @@ export function createSqliteStore(db: SqlDb): AppStore {
       );
       return next;
     },
+    async deleteSession(id) {
+      await db.withTransactionAsync(async () => {
+        await db.runAsync('DELETE FROM attempts WHERE session_id = ?', id);
+        await db.runAsync('DELETE FROM sessions WHERE id = ?', id);
+      });
+    },
     async addAttempt(input) {
       await db.runAsync(
         `INSERT INTO attempts (id, session_id, attempt_index, payload_json, created_at)
@@ -269,19 +281,44 @@ export function createSqliteStore(db: SqlDb): AppStore {
       );
       return rows.map(mapAttempt);
     },
-    async getSettings() {
-      const row = await db.getFirstAsync<Record<string, unknown>>(
-        `SELECT value FROM settings WHERE key = 'displayName'`,
+    async removeLastAttempt(sessionId) {
+      const rows = await db.getAllAsync<Record<string, unknown>>(
+        'SELECT * FROM attempts WHERE session_id = ? ORDER BY attempt_index DESC LIMIT 1',
+        sessionId,
       );
-      return { displayName: row ? String(row.value) : '' };
+      if (rows.length === 0) return null;
+      const last = mapAttempt(rows[0]);
+      await db.runAsync('DELETE FROM attempts WHERE id = ?', last.id);
+      return last;
     },
-    async setDisplayName(name) {
-      await db.runAsync(
-        `INSERT INTO settings (key, value) VALUES ('displayName', ?)
-         ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
-        name,
+    async getSettings() {
+      const rows = await db.getAllAsync<Record<string, unknown>>(
+        'SELECT key, value FROM settings',
       );
-      return { displayName: name };
+      const map = Object.fromEntries(
+        rows.map((r) => [String(r.key), String(r.value)]),
+      );
+      return {
+        displayName: map.displayName ?? '',
+        units: map.units === 'meters' ? 'meters' : 'yards',
+      };
+    },
+    async updateSettings(patch) {
+      const current = await this.getSettings();
+      const next = { ...current, ...patch };
+      await db.withTransactionAsync(async () => {
+        await db.runAsync(
+          `INSERT INTO settings (key, value) VALUES ('displayName', ?)
+           ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
+          next.displayName,
+        );
+        await db.runAsync(
+          `INSERT INTO settings (key, value) VALUES ('units', ?)
+           ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
+          next.units,
+        );
+      });
+      return next;
     },
     async clearUserData() {
       await db.execAsync(`
@@ -291,6 +328,61 @@ export function createSqliteStore(db: SqlDb): AppStore {
         DELETE FROM packs;
         DELETE FROM settings;
       `);
+    },
+    async exportSnapshot() {
+      return {
+        packs: await this.listPacks(),
+        drills: await this.listDrills(),
+        sessions: await this.listSessions(),
+        attempts: (
+          await Promise.all(
+            (await this.listSessions()).map((s) => this.listAttempts(s.id)),
+          )
+        ).flat(),
+        settings: await this.getSettings(),
+      };
+    },
+    async importSnapshot(snapshot) {
+      await this.clearUserData();
+      for (const pack of snapshot.packs) {
+        await this.upsertPack(pack);
+      }
+      const byPack = new Map<string, typeof snapshot.drills>();
+      for (const drill of snapshot.drills) {
+        const list = byPack.get(drill.packId) ?? [];
+        list.push(drill);
+        byPack.set(drill.packId, list);
+      }
+      for (const [packId, drills] of byPack) {
+        await this.replaceDrillsForPack(packId, drills);
+      }
+      for (const session of snapshot.sessions) {
+        await db.runAsync(
+          `INSERT INTO sessions
+            (id, drill_id, drill_name, drill_category, status, started_at, ended_at, notes, summary_score, summary_value)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          session.id,
+          session.drillId,
+          session.drillName,
+          session.drillCategory,
+          session.status,
+          session.startedAt,
+          session.endedAt,
+          session.notes,
+          session.summaryScore,
+          session.summaryValue,
+        );
+      }
+      for (const attempt of snapshot.attempts) {
+        await this.addAttempt({
+          id: attempt.id,
+          sessionId: attempt.sessionId,
+          index: attempt.index,
+          payload: attempt.payload,
+          createdAt: attempt.createdAt,
+        });
+      }
+      await this.updateSettings(snapshot.settings);
     },
   };
 }

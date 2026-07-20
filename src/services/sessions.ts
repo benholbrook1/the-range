@@ -14,15 +14,20 @@ function newId(prefix: string): string {
 export async function startSession(
   store: AppStore,
   drillId: string,
+  opts?: { discardActive?: boolean },
 ): Promise<Session> {
   const drill = await store.getDrill(drillId);
   if (!drill) throw new Error(`Drill not found: ${drillId}`);
 
   const existing = await store.getActiveSession();
   if (existing) {
-    throw new Error(
-      'An active session already exists. Resume or complete it first.',
-    );
+    if (opts?.discardActive) {
+      await store.deleteSession(existing.id);
+    } else {
+      throw new Error(
+        'An active session already exists. Resume, save, or discard it first.',
+      );
+    }
   }
 
   return store.createSession({
@@ -40,10 +45,11 @@ export async function getActiveSession(
   return store.getActiveSession();
 }
 
-export async function resumeActiveSession(
-  store: AppStore,
-): Promise<Session | null> {
-  return store.getActiveSession();
+export async function discardActiveSession(store: AppStore): Promise<void> {
+  const active = await store.getActiveSession();
+  if (active) {
+    await store.deleteSession(active.id);
+  }
 }
 
 export async function logAttempt(
@@ -64,6 +70,18 @@ export async function logAttempt(
     payload,
     createdAt: new Date().toISOString(),
   });
+}
+
+export async function undoLastAttempt(
+  store: AppStore,
+  sessionId: string,
+): Promise<Attempt | null> {
+  const session = await store.getSession(sessionId);
+  if (!session) throw new Error(`Session not found: ${sessionId}`);
+  if (session.status !== 'active') {
+    throw new Error('Cannot undo on a completed session');
+  }
+  return store.removeLastAttempt(sessionId);
 }
 
 export async function completeSession(
