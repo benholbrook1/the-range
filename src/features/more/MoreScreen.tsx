@@ -2,22 +2,31 @@ import Constants from 'expo-constants';
 import * as DocumentPicker from 'expo-document-picker';
 import { useFocusEffect } from 'expo-router';
 import React, { useCallback, useState } from 'react';
-import { Alert, StyleSheet, TextInput } from 'react-native';
+import { Alert, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { Button } from '@/src/components/ui/Button';
 import { ListRow } from '@/src/components/ui/ListRow';
 import { Screen } from '@/src/components/ui/Screen';
 import { Text } from '@/src/components/ui/Text';
 import { useStore } from '@/src/db/StoreContext';
-import type { Pack } from '@/src/domain/types';
+import type { DistanceUnits, Pack } from '@/src/domain/types';
 import { clearAllAndReseed } from '@/src/services/bootstrap';
-import { listInstalledPacks, tryInstallPackPayload } from '@/src/services/packs';
-import { getSettings, setDisplayName } from '@/src/services/settings';
+import {
+  listInstalledPacks,
+  tryInstallPackPayload,
+  uninstallPack,
+} from '@/src/services/packs';
+import {
+  getSettings,
+  setDisplayName,
+  setUnits,
+} from '@/src/services/settings';
 import { colors, spacing } from '@/src/theme';
 
 export function MoreScreen() {
   const store = useStore();
   const [name, setName] = useState('');
+  const [units, setUnitsState] = useState<DistanceUnits>('yards');
   const [packs, setPacks] = useState<Pack[]>([]);
 
   const refresh = useCallback(async () => {
@@ -26,6 +35,7 @@ export function MoreScreen() {
       listInstalledPacks(store),
     ]);
     setName(settings.displayName);
+    setUnitsState(settings.units);
     setPacks(installed);
   }, [store]);
 
@@ -39,6 +49,14 @@ export function MoreScreen() {
     await setDisplayName(store, name);
     Alert.alert('Saved', 'Display name updated.');
   }, [store, name]);
+
+  const onUnits = useCallback(
+    async (next: DistanceUnits) => {
+      setUnitsState(next);
+      await setUnits(store, next);
+    },
+    [store],
+  );
 
   const importPack = useCallback(async () => {
     try {
@@ -66,6 +84,34 @@ export function MoreScreen() {
       );
     }
   }, [store, refresh]);
+
+  const onRemovePack = useCallback(
+    (pack: Pack) => {
+      Alert.alert(
+        'Remove pack?',
+        `Remove “${pack.name}”? Past sessions stay in History.`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Remove',
+            style: 'destructive',
+            onPress: async () => {
+              try {
+                await uninstallPack(store, pack.id);
+                await refresh();
+              } catch (e) {
+                Alert.alert(
+                  'Could not remove',
+                  e instanceof Error ? e.message : 'Unknown error',
+                );
+              }
+            },
+          },
+        ],
+      );
+    },
+    [store, refresh],
+  );
 
   const onClear = useCallback(() => {
     Alert.alert(
@@ -106,6 +152,31 @@ export function MoreScreen() {
       <Button label="Save name" variant="secondary" onPress={saveName} />
 
       <Text variant="subtitle" style={styles.section}>
+        Units
+      </Text>
+      <View style={styles.unitsRow}>
+        {(['yards', 'meters'] as DistanceUnits[]).map((option) => {
+          const selected = units === option;
+          return (
+            <Pressable
+              key={option}
+              onPress={() => void onUnits(option)}
+              style={styles.unitOption}
+              accessibilityRole="button"
+              accessibilityState={{ selected }}
+            >
+              <Text
+                color={selected ? colors.accent : colors.textMuted}
+                style={selected ? styles.unitSelected : undefined}
+              >
+                {option === 'yards' ? 'Yards' : 'Meters'}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+
+      <Text variant="subtitle" style={styles.section}>
         Drill packs
       </Text>
       {packs.map((pack) => (
@@ -113,6 +184,18 @@ export function MoreScreen() {
           key={pack.id}
           title={pack.name}
           meta={`${pack.source} · v${pack.schemaVersion}`}
+          right={
+            <Pressable
+              onPress={() => onRemovePack(pack)}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel={`Remove ${pack.name}`}
+            >
+              <Text color={colors.danger} variant="secondary">
+                Remove
+              </Text>
+            </Pressable>
+          }
         />
       ))}
       <Button label="Import pack" onPress={importPack} style={styles.spaced} />
@@ -148,6 +231,20 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.text,
     fontFamily: 'DMSans_400Regular',
+  },
+  unitsRow: {
+    flexDirection: 'row',
+    gap: spacing.md,
+    minHeight: 44,
+    alignItems: 'center',
+  },
+  unitOption: {
+    minHeight: 44,
+    justifyContent: 'center',
+  },
+  unitSelected: {
+    textDecorationLine: 'underline',
+    fontFamily: 'DMSans_700Bold',
   },
   spaced: {
     marginTop: spacing.sm,

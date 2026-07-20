@@ -34,6 +34,7 @@ export function Button({
         variant === 'secondary' && styles.secondary,
         variant === 'danger' && styles.danger,
         variant === 'ghost' && styles.ghost,
+        pressed && styles.pressed,
         pressed && variant === 'primary' && styles.primaryPressed,
         disabled && styles.disabled,
         style,
@@ -80,6 +81,10 @@ const styles = StyleSheet.create({
   },
   ghost: {
     backgroundColor: 'transparent',
+  },
+  pressed: {
+    opacity: 0.88,
+    transform: [{ scale: 0.98 }],
   },
   disabled: {
     opacity: 0.5,

@@ -5,10 +5,13 @@ import {
 
 let singleton: AppStore | null = null;
 
-/** Web: in-memory store only (expo-sqlite WASM is not available in Metro web). */
+/** Web: AsyncStorage-backed memory store (no expo-sqlite). */
 export async function getAppStore(): Promise<AppStore> {
   if (!singleton) {
-    singleton = createMemoryStore();
+    const { createPersistedMemoryStore } = await import(
+      '@/src/db/persistedMemoryStore'
+    );
+    singleton = await createPersistedMemoryStore();
   }
   return singleton;
 }
@@ -16,3 +19,6 @@ export async function getAppStore(): Promise<AppStore> {
 export function setAppStoreForTests(store: AppStore | null) {
   singleton = store;
 }
+
+// Keep createMemoryStore available for tests via this module if needed
+export { createMemoryStore };

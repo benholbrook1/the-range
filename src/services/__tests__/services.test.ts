@@ -2,17 +2,25 @@ import { createMemoryStore } from '@/src/db/memoryStore';
 import { bootstrapApp, clearAllAndReseed } from '@/src/services/bootstrap';
 import {
   getDrill,
+  getLastScore,
   getPersonalBest,
   listDrills,
+  listHistoryDrillOptions,
 } from '@/src/services/drills';
-import { tryInstallPackPayload } from '@/src/services/packs';
+import {
+  tryInstallPackPayload,
+  uninstallPack,
+} from '@/src/services/packs';
 import {
   completeSession,
+  discardActiveSession,
   getActiveSession,
   listHistory,
   logAttempt,
   startSession,
+  undoLastAttempt,
 } from '@/src/services/sessions';
+import { getSettings, setUnits } from '@/src/services/settings';
 
 describe('services with memory store', () => {
   it('bootstraps bundled drills and supports list/filter', async () => {
@@ -26,7 +34,7 @@ describe('services with memory store', () => {
     expect(search.some((d) => d.id === 'gate-putting-3ft')).toBe(true);
   });
 
-  it('runs session lifecycle and resume', async () => {
+  it('runs session lifecycle, undo, and resume', async () => {
     const store = createMemoryStore();
     await bootstrapApp(store);
     const session = await startSession(store, 'gate-putting-3ft');
@@ -41,6 +49,8 @@ describe('services with memory store', () => {
       type: 'makes_out_of',
       made: false,
     });
+    const undone = await undoLastAttempt(store, session.id);
+    expect(undone?.payload).toEqual({ type: 'makes_out_of', made: false });
 
     const stillActive = await getActiveSession(store);
     expect(stillActive?.id).toBe(session.id);
@@ -55,9 +65,36 @@ describe('services with memory store', () => {
 
     const best = await getPersonalBest(store, 'gate-putting-3ft');
     expect(best?.label).toBe('1/10');
+    const last = await getLastScore(store, 'gate-putting-3ft');
+    expect(last?.label).toBe('1/10');
+    const options = await listHistoryDrillOptions(store);
+    expect(options.some((o) => o.id === 'gate-putting-3ft')).toBe(true);
   });
 
-  it('rejects invalid packs and installs valid ones', async () => {
+  it('discards active session and can start another', async () => {
+    const store = createMemoryStore();
+    await bootstrapApp(store);
+    await startSession(store, 'gate-putting-3ft');
+    await expect(startSession(store, 'lag-putting-20ft')).rejects.toThrow(
+      /active session/i,
+    );
+    await discardActiveSession(store);
+    const next = await startSession(store, 'lag-putting-20ft');
+    expect(next.drillId).toBe('lag-putting-20ft');
+  });
+
+  it('starts with discardActive option', async () => {
+    const store = createMemoryStore();
+    await bootstrapApp(store);
+    await startSession(store, 'gate-putting-3ft');
+    const next = await startSession(store, 'chip-to-circle', {
+      discardActive: true,
+    });
+    expect(next.drillId).toBe('chip-to-circle');
+    expect((await getActiveSession(store))?.drillId).toBe('chip-to-circle');
+  });
+
+  it('rejects invalid packs, installs valid ones, and uninstalls', async () => {
     const store = createMemoryStore();
     await bootstrapApp(store);
     const bad = await tryInstallPackPayload(
@@ -88,11 +125,15 @@ describe('services with memory store', () => {
     );
     expect(good.ok).toBe(true);
     expect(await getDrill(store, 'extra-drill')).not.toBeNull();
+    await uninstallPack(store, 'extra-v1');
+    expect(await getDrill(store, 'extra-drill')).toBeNull();
   });
 
-  it('clear and reseed restores starter drills', async () => {
+  it('updates units and clear/reseed restores starter drills', async () => {
     const store = createMemoryStore();
     await bootstrapApp(store);
+    await setUnits(store, 'meters');
+    expect((await getSettings(store)).units).toBe('meters');
     await startSession(store, 'gate-putting-3ft');
     await clearAllAndReseed(store);
     expect(await getActiveSession(store)).toBeNull();

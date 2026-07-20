@@ -34,7 +34,6 @@ export async function installPackPayload(
   };
   const drills = toDrills(packInput);
 
-  // Validate first (parseDrillPack already did). Write atomically-ish:
   await store.upsertPack(pack);
   await store.replaceDrillsForPack(pack.id, drills);
   return { pack, drillCount: drills.length };
@@ -63,4 +62,13 @@ export async function tryInstallPackPayload(
 
 export async function listInstalledPacks(store: AppStore): Promise<Pack[]> {
   return store.listPacks();
+}
+
+export async function uninstallPack(
+  store: AppStore,
+  packId: string,
+): Promise<void> {
+  const pack = await store.getPack(packId);
+  if (!pack) throw new Error('Pack not found');
+  await store.removePack(packId);
 }

@@ -10,8 +10,10 @@ import { createAttemptPayload, summarizeAttempts } from '@/src/domain/scoring';
 import type { Attempt, Drill, Session } from '@/src/domain/types';
 import {
   completeSession,
+  discardActiveSession,
   getSessionDetail,
   logAttempt,
+  undoLastAttempt,
 } from '@/src/services/sessions';
 import { colors, spacing } from '@/src/theme';
 
@@ -58,6 +60,16 @@ export function ActiveSessionScreen() {
     [session, drill, store, refresh],
   );
 
+  const onUndo = useCallback(async () => {
+    if (!session) return;
+    const removed = await undoLastAttempt(store, session.id);
+    if (!removed) {
+      Alert.alert('Nothing to undo');
+      return;
+    }
+    await refresh();
+  }, [session, store, refresh]);
+
   const onComplete = useCallback(async () => {
     if (!session) return;
     try {
@@ -70,6 +82,24 @@ export function ActiveSessionScreen() {
       );
     }
   }, [session, store, notes, router]);
+
+  const onDiscard = useCallback(() => {
+    Alert.alert(
+      'Discard session?',
+      'Logged attempts will be deleted and won’t appear in History.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Discard',
+          style: 'destructive',
+          onPress: async () => {
+            await discardActiveSession(store);
+            router.replace('/(tabs)/drills');
+          },
+        },
+      ],
+    );
+  }, [store, router]);
 
   if (!session || !drill) {
     return (
@@ -156,6 +186,13 @@ export function ActiveSessionScreen() {
             />
           </View>
         ) : null}
+
+        <Button
+          label="Undo last"
+          variant="ghost"
+          onPress={onUndo}
+          disabled={attempts.length === 0}
+        />
       </View>
 
       <Text variant="subtitle" style={styles.section}>
@@ -171,6 +208,12 @@ export function ActiveSessionScreen() {
       />
 
       <Button label="End & save" onPress={onComplete} style={styles.save} />
+      <Button
+        label="Discard session"
+        variant="danger"
+        onPress={onDiscard}
+        style={styles.discard}
+      />
     </Screen>
   );
 }
@@ -215,5 +258,8 @@ const styles = StyleSheet.create({
   },
   save: {
     marginTop: spacing.lg,
+  },
+  discard: {
+    marginTop: spacing.sm,
   },
 });
