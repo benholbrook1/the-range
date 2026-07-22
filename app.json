@@ -10,7 +10,8 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.therange.app",
-      "buildNumber": "1"
+      "buildNumber": "2",
+      "icon": "./assets/images/icon.png"
     },
     "android": {
       "adaptiveIcon": {
