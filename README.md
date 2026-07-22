@@ -35,7 +35,7 @@ This installs a real app via Xcode signing. Free Apple Developer profiles expire
 1. On your Mac: install Xcode from the App Store, open it once, and accept the license.
 2. **Xcode → Settings → Accounts** → add your Apple ID.
 3. On the iPhone: enable **Developer Mode** (Settings → Privacy & Security) and connect with a cable. Trust the computer.
-4. In the project, install a **Release** build (JS is embedded — no Metro required):
+4. In the project, install a **Release** build (JS is embedded — no Metro required). This always regenerates the native `ios` project so icons stay current:
 
 ```bash
 git checkout main
@@ -48,6 +48,17 @@ npm run ios:device:release
 6. On the phone, if it won’t open: **Settings → General → VPN & Device Management** → trust your developer certificate.
 
 Bundle ID: `com.therange.app` (change in `app.json` if that ID is already taken on your account).
+
+### Icon still shows the old Expo logo
+
+iOS caches icons, and a leftover local `ios/` folder can keep the old AppIcon. Do a full clean:
+
+```bash
+rm -rf ios
+npm run ios:device:release
+```
+
+Then delete the app from the phone, **restart the iPhone**, and install again.
 
 ### “No script URL provided”
 
