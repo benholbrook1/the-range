@@ -8,7 +8,16 @@ describe('packSchema', () => {
   it('accepts the bundled starter pack', () => {
     const pack = parseDrillPack(coreStarter);
     expect(pack.packId).toBe('core-starter-v1');
-    expect(pack.drills.length).toBeGreaterThan(0);
+    expect(pack.name).toBe('Practice Games');
+    expect(pack.drills.length).toBeGreaterThanOrEqual(8);
+    expect(pack.drills.every((d) => d.visual)).toBe(true);
+    const par18 = pack.drills.find((d) => d.id === 'par-18');
+    expect(par18?.scoring).toEqual({
+      type: 'strokes',
+      holes: 18,
+      parPerHole: 2,
+      unit: 'strokes',
+    });
   });
 
   it('rejects wrong schemaVersion', () => {

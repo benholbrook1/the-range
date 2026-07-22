@@ -1,4 +1,5 @@
 import type { AppStore } from '@/src/db/memoryStore';
+import { computeDifferential } from '@/src/domain/handicap';
 import { summarizeAttempts } from '@/src/domain/scoring';
 import type {
   Attempt,
@@ -95,12 +96,18 @@ export async function completeSession(
   if (!drill) throw new Error(`Drill missing for session: ${session.drillId}`);
   const attempts = await store.listAttempts(sessionId);
   const summary = summarizeAttempts(drill.scoring, attempts);
+  const differential = computeDifferential(
+    drill.scoring,
+    summary.value,
+    attempts.length,
+  );
   return store.updateSession(sessionId, {
     status: 'completed',
     endedAt: new Date().toISOString(),
     notes: notes?.trim() ? notes.trim() : null,
     summaryScore: summary.label,
     summaryValue: summary.value,
+    differential,
   });
 }
 

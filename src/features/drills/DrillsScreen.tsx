@@ -1,12 +1,12 @@
 import * as DocumentPicker from 'expo-document-picker';
 import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useMemo, useState } from 'react';
-import { Alert, StyleSheet, TextInput, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { CategoryFilter } from '@/src/components/drills/CategoryFilter';
+import { DrillVisual } from '@/src/components/drills/DrillVisual';
 import { Button } from '@/src/components/ui/Button';
 import { EmptyState } from '@/src/components/ui/EmptyState';
-import { ListRow } from '@/src/components/ui/ListRow';
 import { Screen } from '@/src/components/ui/Screen';
 import { Text } from '@/src/components/ui/Text';
 import { useStore } from '@/src/db/StoreContext';
@@ -15,6 +15,24 @@ import type { Drill, DrillCategory } from '@/src/domain/types';
 import { listDrills } from '@/src/services/drills';
 import { tryInstallPackPayload } from '@/src/services/packs';
 import { colors, spacing } from '@/src/theme';
+
+function scoringMeta(drill: Drill): string {
+  const scoring = drill.scoring;
+  if (scoring.type === 'makes_out_of') {
+    return `${scoring.attempts} ${scoring.unit}`;
+  }
+  if (scoring.type === 'strokes') {
+    return `${scoring.holes} balls · par ${scoring.holes * scoring.parPerHole}`;
+  }
+  if (scoring.type === 'score_total') {
+    return scoring.attempts != null
+      ? `${scoring.attempts} shots · points`
+      : 'Points';
+  }
+  return scoring.target != null
+    ? `${scoring.target} ${scoring.unit}`
+    : scoring.unit;
+}
 
 export function DrillsScreen() {
   const store = useStore();
@@ -77,28 +95,32 @@ export function DrillsScreen() {
 
   const subtitle = useMemo(() => {
     if (filteredEmpty) return null;
-    if (hasFilters) return `${drills.length} of ${totalCount} drills`;
-    return `${totalCount} drills`;
+    if (hasFilters) return `${drills.length} of ${totalCount} games`;
+    return `${totalCount} games`;
   }, [filteredEmpty, hasFilters, drills.length, totalCount]);
 
   return (
     <Screen scroll>
       <View style={styles.header}>
         <View style={styles.titleBlock}>
-          <Text variant="title">Drills</Text>
+          <Text variant="title">Games</Text>
           {subtitle ? (
             <Text muted variant="secondary">
               {subtitle}
             </Text>
-          ) : null}
+          ) : (
+            <Text muted variant="secondary">
+              Measurable practice games
+            </Text>
+          )}
         </View>
-        <Button label="Import pack" variant="ghost" onPress={importPack} />
+        <Button label="Import" variant="ghost" onPress={importPack} />
       </View>
 
       <TextInput
         value={query}
         onChangeText={setQuery}
-        placeholder="Search drills"
+        placeholder="Search games"
         placeholderTextColor={colors.textMuted}
         style={styles.search}
         autoCorrect={false}
@@ -110,7 +132,7 @@ export function DrillsScreen() {
 
       {filteredEmpty ? (
         <EmptyState
-          title={hasFilters ? 'No matching drills' : 'No drills yet'}
+          title={hasFilters ? 'No matching games' : 'No games yet'}
           message={
             hasFilters
               ? 'Try clearing search or category filters.'
@@ -121,17 +143,25 @@ export function DrillsScreen() {
         />
       ) : (
         drills.map((drill) => (
-          <ListRow
+          <Pressable
             key={drill.id}
-            title={drill.name}
-            meta={`${categoryLabel(drill.category)} · ${drill.estimatedMinutes} min`}
             onPress={() => router.push(`/drill/${drill.id}`)}
-            right={
+            accessibilityRole="button"
+            style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
+          >
+            {drill.visual ? (
+              <DrillVisual id={drill.visual} size="list" />
+            ) : (
+              <View style={styles.visualPlaceholder} />
+            )}
+            <View style={styles.rowText}>
+              <Text variant="subtitle">{drill.name}</Text>
               <Text muted variant="secondary">
-                ›
+                {categoryLabel(drill.category)} · {scoringMeta(drill)} ·{' '}
+                {drill.estimatedMinutes} min
               </Text>
-            }
-          />
+            </View>
+          </Pressable>
         ))
       )}
     </Screen>
@@ -158,5 +188,28 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.text,
     fontFamily: 'DMSans_400Regular',
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingVertical: spacing.sm,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border,
+  },
+  rowPressed: {
+    opacity: 0.65,
+  },
+  rowText: {
+    flex: 1,
+    gap: 2,
+  },
+  visualPlaceholder: {
+    width: 56,
+    height: 40,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    borderRadius: 6,
   },
 });

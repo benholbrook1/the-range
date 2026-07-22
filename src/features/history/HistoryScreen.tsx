@@ -1,6 +1,6 @@
 import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useMemo, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { EmptyState } from '@/src/components/ui/EmptyState';
 import { Screen } from '@/src/components/ui/Screen';
@@ -12,6 +12,7 @@ import {
 } from '@/src/domain/categories';
 import { formatRelativeDay } from '@/src/domain/format';
 import type { DrillCategory, Session } from '@/src/domain/types';
+import { formatDifferential } from '@/src/services/handicap';
 import { listHistory } from '@/src/services/sessions';
 import { colors, spacing } from '@/src/theme';
 
@@ -56,35 +57,43 @@ export function HistoryScreen() {
 
   return (
     <Screen scroll style={styles.page}>
-      <Text variant="brand" style={styles.title}>
-        Log
+      <Text variant="title" style={styles.title}>
+        Practice log
+      </Text>
+      <Text muted style={styles.count}>
+        {sessions.length === 0
+          ? hasFilter
+            ? 'No sessions in this category'
+            : 'Nothing logged yet'
+          : `${sessions.length} session${sessions.length === 1 ? '' : 's'}`}
       </Text>
 
-      <View style={styles.filters}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.filters}
+      >
         {ALL_CATEGORIES.map((cat) => {
           const selected = cat === category;
           return (
             <Pressable
               key={cat}
               onPress={() => setCategory(cat)}
-              style={styles.filterItem}
+              style={[styles.filterItem, selected && styles.filterItemOn]}
               accessibilityRole="button"
               accessibilityState={{ selected }}
             >
               <Text
                 variant="secondary"
-                color={selected ? colors.accent : colors.textMuted}
-                style={[
-                  styles.filterLabel,
-                  selected ? styles.filterLabelOn : null,
-                ]}
+                color={selected ? colors.surface : colors.textMuted}
+                style={styles.filterLabel}
               >
                 {categoryLabel(cat)}
               </Text>
             </Pressable>
           );
         })}
-      </View>
+      </ScrollView>
 
       {sessions.length === 0 ? (
         <EmptyState
@@ -92,9 +101,9 @@ export function HistoryScreen() {
           message={
             hasFilter
               ? 'Switch category, or clear to All.'
-              : 'Complete a drill and your scores land here.'
+              : 'Complete a game and your scores land here.'
           }
-          actionLabel={hasFilter ? 'Show all' : 'Find a drill'}
+          actionLabel={hasFilter ? 'Show all' : 'Find a game'}
           onAction={
             hasFilter
               ? () => setCategory('all')
@@ -105,27 +114,39 @@ export function HistoryScreen() {
         groups.map((group) => (
           <View key={group.label} style={styles.group}>
             <Text style={styles.day}>{group.label}</Text>
-            {group.sessions.map((session) => (
-              <Pressable
-                key={session.id}
-                onPress={() => router.push(`/session/${session.id}`)}
-                accessibilityRole="button"
-                style={({ pressed }) => [
-                  styles.row,
-                  pressed && styles.rowPressed,
-                ]}
-              >
-                <View style={styles.rowMain}>
-                  <Text variant="subtitle">{session.drillName}</Text>
-                  <Text muted variant="secondary">
-                    {categoryLabel(session.drillCategory)}
-                  </Text>
-                </View>
-                <Text variant="score" color={colors.accent}>
-                  {session.summaryScore ?? '—'}
-                </Text>
-              </Pressable>
-            ))}
+            <View style={styles.timeline}>
+              {group.sessions.map((session, index) => {
+                const isLast = index === group.sessions.length - 1;
+                return (
+                  <Pressable
+                    key={session.id}
+                    onPress={() => router.push(`/session/${session.id}`)}
+                    accessibilityRole="button"
+                    style={({ pressed }) => [
+                      styles.row,
+                      pressed && styles.rowPressed,
+                    ]}
+                  >
+                    <View style={styles.spine}>
+                      <View style={styles.dot} />
+                      {!isLast ? <View style={styles.line} /> : null}
+                    </View>
+                    <View style={styles.rowBody}>
+                      <Text style={styles.score} color={colors.accent}>
+                        {session.summaryScore ?? '—'}
+                      </Text>
+                      <Text variant="subtitle">{session.drillName}</Text>
+                      <Text muted variant="secondary">
+                        {categoryLabel(session.drillCategory)}
+                        {session.differential != null
+                          ? ` · diff ${formatDifferential(session.differential)}`
+                          : ''}
+                      </Text>
+                    </View>
+                  </Pressable>
+                );
+              })}
+            </View>
           </View>
         ))
       )}
@@ -138,48 +159,86 @@ const styles = StyleSheet.create({
     paddingTop: spacing.md,
   },
   title: {
+    marginBottom: spacing.xs,
+  },
+  count: {
     marginBottom: spacing.md,
+    fontSize: 15,
   },
   filters: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
+    gap: spacing.xs,
     marginBottom: spacing.lg,
+    paddingRight: spacing.pageX,
   },
   filterItem: {
-    minHeight: 40,
+    minHeight: 36,
+    paddingHorizontal: spacing.sm,
     justifyContent: 'center',
+    borderRadius: 8,
+    backgroundColor: colors.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
+  },
+  filterItemOn: {
+    backgroundColor: colors.accent,
+    borderColor: colors.accent,
   },
   filterLabel: {
-    fontSize: 15,
-  },
-  filterLabelOn: {
     fontFamily: 'DMSans_700Bold',
-    textDecorationLine: 'underline',
+    fontSize: 13,
   },
   group: {
     marginBottom: spacing.lg,
   },
   day: {
-    fontFamily: 'DMSans_700Bold',
-    fontSize: 15,
-    lineHeight: 20,
-    color: colors.text,
-    marginBottom: spacing.xs,
+    fontFamily: 'SpaceGrotesk_700Bold',
+    fontSize: 13,
+    lineHeight: 18,
+    letterSpacing: 1.1,
+    textTransform: 'uppercase',
+    color: colors.accent,
+    marginBottom: spacing.sm,
+  },
+  timeline: {
+    gap: 0,
   },
   row: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    paddingVertical: spacing.sm,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
+    alignItems: 'stretch',
+    minHeight: 72,
   },
   rowPressed: {
     opacity: 0.65,
   },
-  rowMain: {
+  spine: {
+    width: 20,
+    alignItems: 'center',
+  },
+  dot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: colors.accent,
+    marginTop: 6,
+  },
+  line: {
     flex: 1,
+    width: 2,
+    backgroundColor: colors.border,
+    marginTop: 4,
+    marginBottom: 0,
+  },
+  rowBody: {
+    flex: 1,
+    paddingBottom: spacing.md,
+    paddingLeft: spacing.xs,
     gap: 2,
+  },
+  score: {
+    fontFamily: 'SpaceGrotesk_700Bold',
+    fontSize: 28,
+    lineHeight: 32,
+    letterSpacing: -0.6,
   },
 });

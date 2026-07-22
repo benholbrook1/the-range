@@ -6,7 +6,7 @@ import React, {
   useMemo,
   useState,
 } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet } from 'react-native';
 
 import { Button } from '@/src/components/ui/Button';
 import { ListRow } from '@/src/components/ui/ListRow';
@@ -14,11 +14,18 @@ import { Screen } from '@/src/components/ui/Screen';
 import { SectionHeader } from '@/src/components/ui/SectionHeader';
 import { Text } from '@/src/components/ui/Text';
 import { useStore } from '@/src/db/StoreContext';
+import { categoryLabel } from '@/src/domain/categories';
 import { formatDateTime, formatDuration } from '@/src/domain/format';
+import { isHandicapArea } from '@/src/domain/handicap';
 import { summarizeAttempts } from '@/src/domain/scoring';
 import type { Attempt, Drill, Session } from '@/src/domain/types';
+import {
+  formatDifferential,
+  formatHandicap,
+  getAreaIndex,
+} from '@/src/services/handicap';
 import { getSessionDetail } from '@/src/services/sessions';
-import { spacing } from '@/src/theme';
+import { colors, spacing } from '@/src/theme';
 
 export function SessionDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -28,6 +35,7 @@ export function SessionDetailScreen() {
   const [session, setSession] = useState<Session | null>(null);
   const [drill, setDrill] = useState<Drill | null>(null);
   const [attempts, setAttempts] = useState<Attempt[]>([]);
+  const [areaIndex, setAreaIndex] = useState<number | null>(null);
 
   const load = useCallback(async () => {
     if (!id) return;
@@ -35,6 +43,11 @@ export function SessionDetailScreen() {
     setSession(detail.session);
     setDrill(detail.drill);
     setAttempts(detail.attempts);
+    if (detail.session && isHandicapArea(detail.session.drillCategory)) {
+      setAreaIndex(await getAreaIndex(store, detail.session.drillCategory));
+    } else {
+      setAreaIndex(null);
+    }
   }, [id, store]);
 
   useEffect(() => {
@@ -66,7 +79,7 @@ export function SessionDetailScreen() {
       footer={
         <>
           <Button
-            label="Repeat this drill"
+            label="Repeat this game"
             onPress={() => router.push(`/drill/${session.drillId}`)}
           />
           <Button
@@ -99,6 +112,22 @@ export function SessionDetailScreen() {
         <Text muted style={styles.detail}>
           {summary.detail}
         </Text>
+      ) : null}
+
+      {session.differential != null &&
+      isHandicapArea(session.drillCategory) ? (
+        <>
+          <SectionHeader title="Handicap" />
+          <Text style={styles.diff} color={colors.accent}>
+            {formatDifferential(session.differential)}
+          </Text>
+          <Text muted style={styles.detail}>
+            {categoryLabel(session.drillCategory)} differential
+            {areaIndex != null
+              ? ` · area index now ${formatHandicap(areaIndex)}`
+              : ''}
+          </Text>
+        </>
       ) : null}
 
       <SectionHeader
@@ -135,6 +164,9 @@ function describePayload(attempt: Attempt): string {
   const p = attempt.payload;
   if (p.type === 'makes_out_of') return p.made ? 'Make' : 'Miss';
   if (p.type === 'reps') return `${p.count} reps`;
+  if (p.type === 'strokes') {
+    return p.strokes === 1 ? '1 stroke' : `${p.strokes} strokes`;
+  }
   return `${p.points} points`;
 }
 
@@ -144,5 +176,11 @@ const styles = StyleSheet.create({
   },
   detail: {
     marginTop: spacing.xs,
+  },
+  diff: {
+    fontFamily: 'SpaceGrotesk_700Bold',
+    fontSize: 40,
+    lineHeight: 44,
+    letterSpacing: -1,
   },
 });

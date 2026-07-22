@@ -1,4 +1,5 @@
 import type { AppStore } from '@/src/db/memoryStore';
+import { isLowerBetter } from '@/src/domain/scoring';
 import type { Drill } from '@/src/domain/types';
 
 export async function listDrills(
@@ -19,15 +20,23 @@ export async function getPersonalBest(
   store: AppStore,
   drillId: string,
 ): Promise<{ label: string; value: number } | null> {
-  const sessions = await store.listSessions({
-    status: 'completed',
-    drillId,
-  });
+  const [sessions, drill] = await Promise.all([
+    store.listSessions({
+      status: 'completed',
+      drillId,
+    }),
+    store.getDrill(drillId),
+  ]);
   const scored = sessions.filter(
     (s) => s.summaryValue != null && s.summaryScore != null,
   );
   if (scored.length === 0) return null;
-  scored.sort((a, b) => (b.summaryValue ?? 0) - (a.summaryValue ?? 0));
+  const lower = drill ? isLowerBetter(drill.scoring) : false;
+  scored.sort((a, b) =>
+    lower
+      ? (a.summaryValue ?? 0) - (b.summaryValue ?? 0)
+      : (b.summaryValue ?? 0) - (a.summaryValue ?? 0),
+  );
   const best = scored[0];
   return { label: best.summaryScore!, value: best.summaryValue! };
 }
@@ -54,6 +63,8 @@ export async function getLastCompletedSession(
   startedAt: string;
   summaryScore: string | null;
   sessionId: string;
+  differential: number | null;
+  drillCategory: import('@/src/domain/types').DrillCategory;
 } | null> {
   const sessions = await store.listSessions({ status: 'completed' });
   if (sessions.length === 0) return null;
@@ -64,6 +75,8 @@ export async function getLastCompletedSession(
     startedAt: s.startedAt,
     summaryScore: s.summaryScore,
     sessionId: s.id,
+    differential: s.differential,
+    drillCategory: s.drillCategory,
   };
 }
 

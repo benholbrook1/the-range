@@ -1,17 +1,71 @@
 {
   "schemaVersion": 1,
   "packId": "core-starter-v1",
-  "name": "Core Starter Pack",
+  "name": "Practice Games",
   "drills": [
     {
-      "id": "gate-putting-3ft",
-      "name": "3ft Gate Putting",
+      "id": "par-18",
+      "name": "Par 18",
+      "category": "short_game",
+      "estimatedMinutes": 25,
+      "visual": "par18",
+      "instructions": [
+        "Drop 18 balls in a ring around the green — different distances and lies.",
+        "Play each ball as its own hole: chip, then putt out.",
+        "Up and down (2 strokes) is par. Chip-in is 1. Three or more is over par.",
+        "Log strokes for every ball. Par for the round is 36 — lower is better."
+      ],
+      "scoring": {
+        "type": "strokes",
+        "holes": 18,
+        "parPerHole": 2,
+        "unit": "strokes"
+      }
+    },
+    {
+      "id": "clock-face",
+      "name": "Clock Face",
+      "category": "short_game",
+      "estimatedMinutes": 15,
+      "visual": "clock",
+      "instructions": [
+        "Imagine a clock around the hole. Chip from 12, 3, 6, and 9 o’clock.",
+        "Hit 3 balls from each station (12 total).",
+        "A make finishes inside a 6-foot circle around the hole."
+      ],
+      "scoring": {
+        "type": "makes_out_of",
+        "attempts": 12,
+        "unit": "chips"
+      }
+    },
+    {
+      "id": "circle-game",
+      "name": "Circle Game",
+      "category": "short_game",
+      "estimatedMinutes": 15,
+      "visual": "rings",
+      "instructions": [
+        "Draw or place a 6-foot circle around the hole.",
+        "Chip 12 balls from mixed lies outside the green.",
+        "Count every ball that finishes inside the circle."
+      ],
+      "scoring": {
+        "type": "makes_out_of",
+        "attempts": 12,
+        "unit": "chips"
+      }
+    },
+    {
+      "id": "gate-keeper",
+      "name": "Gate Keeper",
       "category": "putting",
       "estimatedMinutes": 10,
+      "visual": "gate",
       "instructions": [
-        "Place a gate just wider than the putter head about 6 inches in front of the ball.",
-        "Stroke 10 putts from 3 feet through the gate into the hole.",
-        "Log each make or miss."
+        "Build a gate just wider than the putter head, ~6 inches in front of the ball.",
+        "From 3 feet, stroke 10 putts through the gate and into the hole.",
+        "Both through the gate and in the hole counts as a make."
       ],
       "scoring": {
         "type": "makes_out_of",
@@ -20,96 +74,87 @@
       }
     },
     {
-      "id": "lag-putting-20ft",
-      "name": "20ft Lag Putting",
+      "id": "lag-zone",
+      "name": "Lag Zone",
       "category": "putting",
       "estimatedMinutes": 12,
+      "visual": "lag",
       "instructions": [
-        "From about 20 feet, lag putts to finish inside a 3-foot circle around the hole.",
-        "Hit 8 putts and count how many finish inside the circle."
+        "From about 20–30 feet, lag putts toward the hole.",
+        "Hit 10 putts. A make finishes inside a 3-foot circle.",
+        "Focus on pace — leave yourself a tap-in every time."
       ],
       "scoring": {
         "type": "makes_out_of",
-        "attempts": 8,
+        "attempts": 10,
         "unit": "putts"
       }
     },
     {
-      "id": "chip-to-circle",
-      "name": "Chip to the Circle",
-      "category": "short_game",
-      "estimatedMinutes": 15,
+      "id": "three-six-nine",
+      "name": "3-6-9 Pressure",
+      "category": "putting",
+      "estimatedMinutes": 12,
+      "visual": "pressure",
       "instructions": [
-        "Pick a landing spot and chip to a 6-foot circle around the hole.",
-        "Hit 12 chips from varied lies around the green.",
-        "Count how many finish in the circle."
+        "Make 3 putts from 3 feet, then 3 from 6 feet, then 3 from 9 feet.",
+        "Log each putt as make or miss — 9 total.",
+        "Restart a distance only if you want extra pressure; score is still out of 9."
       ],
       "scoring": {
         "type": "makes_out_of",
-        "attempts": 12,
-        "unit": "chips"
+        "attempts": 9,
+        "unit": "putts"
       }
     },
     {
-      "id": "alignment-stick-swings",
-      "name": "Alignment Stick Swings",
-      "category": "full_swing",
-      "estimatedMinutes": 10,
-      "instructions": [
-        "Lay an alignment stick on your target line.",
-        "Make smooth rehearsal swings focusing on path.",
-        "Log total quality reps completed."
-      ],
-      "scoring": {
-        "type": "reps",
-        "target": 20,
-        "unit": "swings"
-      }
-    },
-    {
-      "id": "tempo-score-blocks",
-      "name": "Tempo Score Blocks",
+      "id": "wedge-rings",
+      "name": "Wedge Rings",
       "category": "full_swing",
       "estimatedMinutes": 15,
+      "visual": "rings",
       "instructions": [
-        "Hit balls in sets of 5 focusing on smooth tempo.",
-        "Score each set from 1–5 for tempo quality.",
-        "Add the set scores together."
+        "Pick a target and set three rings (or use flags): close / mid / long.",
+        "Hit 10 wedges to the target.",
+        "Score each ball: 3 points inner, 2 middle, 1 outer, 0 miss. Max 30."
       ],
       "scoring": {
         "type": "score_total",
-        "unit": "tempo points"
+        "unit": "points",
+        "attempts": 10
       }
     },
     {
-      "id": "clock-chipping",
-      "name": "Clock Face Chipping",
-      "category": "short_game",
-      "estimatedMinutes": 12,
+      "id": "fairway-corridor",
+      "name": "Fairway Corridor",
+      "category": "full_swing",
+      "estimatedMinutes": 15,
+      "visual": "corridor",
       "instructions": [
-        "Imagine a clock around the hole. Chip from 12, 3, 6, and 9 o’clock.",
-        "Hit 3 chips from each station (12 total).",
-        "Count how many finish inside a 6-foot circle."
+        "Pick two alignment sticks (or markers) as a fairway corridor toward a target.",
+        "Hit 10 drives or woods.",
+        "A make stays in the corridor the whole way — no start-line miss."
+      ],
+      "scoring": {
+        "type": "makes_out_of",
+        "attempts": 10,
+        "unit": "shots"
+      }
+    },
+    {
+      "id": "distance-ladder",
+      "name": "Distance Ladder",
+      "category": "full_swing",
+      "estimatedMinutes": 15,
+      "visual": "ladder",
+      "instructions": [
+        "Choose three carry distances (e.g. 40 / 60 / 80).",
+        "Hit 4 balls to each rung — 12 total.",
+        "A make lands inside a reasonable window for that distance (your call)."
       ],
       "scoring": {
         "type": "makes_out_of",
         "attempts": 12,
-        "unit": "chips"
-      }
-    },
-    {
-      "id": "distance-ladder-wedges",
-      "name": "Wedge Distance Ladder",
-      "category": "full_swing",
-      "estimatedMinutes": 15,
-      "instructions": [
-        "Pick three landing distances (e.g. 40, 60, 80 yards or meters).",
-        "Hit 5 balls to each distance focusing on carry control.",
-        "Log total quality reps across the ladder."
-      ],
-      "scoring": {
-        "type": "reps",
-        "target": 15,
         "unit": "shots"
       }
     }

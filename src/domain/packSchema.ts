@@ -16,7 +16,25 @@ const scoringSchema = z.discriminatedUnion('type', [
   z.object({
     type: z.literal('score_total'),
     unit: z.string().min(1),
+    attempts: z.number().int().positive().optional(),
   }),
+  z.object({
+    type: z.literal('strokes'),
+    holes: z.number().int().positive(),
+    parPerHole: z.number().int().positive(),
+    unit: z.string().min(1),
+  }),
+]);
+
+const visualSchema = z.enum([
+  'par18',
+  'clock',
+  'gate',
+  'lag',
+  'rings',
+  'corridor',
+  'ladder',
+  'pressure',
 ]);
 
 export const drillPackSchema = z.object({
@@ -32,6 +50,7 @@ export const drillPackSchema = z.object({
         estimatedMinutes: z.number().positive(),
         instructions: z.array(z.string().min(1)).min(1),
         scoring: scoringSchema,
+        visual: visualSchema.optional(),
       }),
     )
     .min(1),

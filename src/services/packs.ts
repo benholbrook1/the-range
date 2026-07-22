@@ -15,6 +15,7 @@ function toDrills(pack: DrillPackInput): Drill[] {
     estimatedMinutes: d.estimatedMinutes,
     instructions: d.instructions,
     scoring: d.scoring,
+    visual: d.visual,
   }));
 }
 

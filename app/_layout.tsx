@@ -2,8 +2,12 @@ import {
   DMSans_400Regular,
   DMSans_500Medium,
   DMSans_700Bold,
-  useFonts,
 } from '@expo-google-fonts/dm-sans';
+import {
+  SpaceGrotesk_500Medium,
+  SpaceGrotesk_700Bold,
+} from '@expo-google-fonts/space-grotesk';
+import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useState } from 'react';
@@ -26,6 +30,8 @@ export default function RootLayout() {
     DMSans_400Regular,
     DMSans_500Medium,
     DMSans_700Bold,
+    SpaceGrotesk_500Medium,
+    SpaceGrotesk_700Bold,
   });
   const [store, setStore] = useState<AppStore | null>(null);
   const [bootError, setBootError] = useState<string | null>(null);

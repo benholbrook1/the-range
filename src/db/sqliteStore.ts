@@ -29,6 +29,7 @@ async function migrate(db: SqlDb) {
       estimated_minutes REAL NOT NULL,
       instructions_json TEXT NOT NULL,
       scoring_json TEXT NOT NULL,
+      visual TEXT,
       FOREIGN KEY (pack_id) REFERENCES packs(id) ON DELETE CASCADE
     );
     CREATE TABLE IF NOT EXISTS sessions (
@@ -41,7 +42,8 @@ async function migrate(db: SqlDb) {
       ended_at TEXT,
       notes TEXT,
       summary_score TEXT,
-      summary_value REAL
+      summary_value REAL,
+      differential REAL
     );
     CREATE TABLE IF NOT EXISTS attempts (
       id TEXT PRIMARY KEY NOT NULL,
@@ -56,6 +58,18 @@ async function migrate(db: SqlDb) {
       value TEXT NOT NULL
     );
   `);
+
+  // Existing installs created before `visual` / `differential` existed.
+  try {
+    await db.execAsync('ALTER TABLE drills ADD COLUMN visual TEXT');
+  } catch {
+    // Column already present.
+  }
+  try {
+    await db.execAsync('ALTER TABLE sessions ADD COLUMN differential REAL');
+  } catch {
+    // Column already present.
+  }
 }
 
 function mapPack(row: Record<string, unknown>): Pack {
@@ -77,6 +91,10 @@ function mapDrill(row: Record<string, unknown>): Drill {
     estimatedMinutes: Number(row.estimated_minutes),
     instructions: JSON.parse(String(row.instructions_json)) as string[],
     scoring: JSON.parse(String(row.scoring_json)) as Drill['scoring'],
+    visual:
+      row.visual == null || row.visual === ''
+        ? undefined
+        : (String(row.visual) as Drill['visual']),
   };
 }
 
@@ -93,6 +111,8 @@ function mapSession(row: Record<string, unknown>): Session {
     summaryScore: row.summary_score == null ? null : String(row.summary_score),
     summaryValue:
       row.summary_value == null ? null : Number(row.summary_value),
+    differential:
+      row.differential == null ? null : Number(row.differential),
   };
 }
 
@@ -155,8 +175,8 @@ export function createSqliteStore(db: SqlDb): AppStore {
         for (const drill of drills) {
           await db.runAsync(
             `INSERT INTO drills
-              (id, pack_id, name, category, estimated_minutes, instructions_json, scoring_json)
-             VALUES (?, ?, ?, ?, ?, ?, ?)`,
+              (id, pack_id, name, category, estimated_minutes, instructions_json, scoring_json, visual)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
             drill.id,
             drill.packId,
             drill.name,
@@ -164,6 +184,7 @@ export function createSqliteStore(db: SqlDb): AppStore {
             drill.estimatedMinutes,
             JSON.stringify(drill.instructions),
             JSON.stringify(drill.scoring),
+            drill.visual ?? null,
           );
         }
       });
@@ -196,8 +217,8 @@ export function createSqliteStore(db: SqlDb): AppStore {
     async createSession(input: CreateSessionInput) {
       await db.runAsync(
         `INSERT INTO sessions
-          (id, drill_id, drill_name, drill_category, status, started_at, ended_at, notes, summary_score, summary_value)
-         VALUES (?, ?, ?, ?, 'active', ?, NULL, NULL, NULL, NULL)`,
+          (id, drill_id, drill_name, drill_category, status, started_at, ended_at, notes, summary_score, summary_value, differential)
+         VALUES (?, ?, ?, ?, 'active', ?, NULL, NULL, NULL, NULL, NULL)`,
         input.id,
         input.drillId,
         input.drillName,
@@ -239,13 +260,14 @@ export function createSqliteStore(db: SqlDb): AppStore {
       const next = { ...current, ...patch };
       await db.runAsync(
         `UPDATE sessions SET
-          status = ?, ended_at = ?, notes = ?, summary_score = ?, summary_value = ?
+          status = ?, ended_at = ?, notes = ?, summary_score = ?, summary_value = ?, differential = ?
          WHERE id = ?`,
         next.status,
         next.endedAt,
         next.notes,
         next.summaryScore,
         next.summaryValue,
+        next.differential,
         id,
       );
       return next;
@@ -359,8 +381,8 @@ export function createSqliteStore(db: SqlDb): AppStore {
       for (const session of snapshot.sessions) {
         await db.runAsync(
           `INSERT INTO sessions
-            (id, drill_id, drill_name, drill_category, status, started_at, ended_at, notes, summary_score, summary_value)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            (id, drill_id, drill_name, drill_category, status, started_at, ended_at, notes, summary_score, summary_value, differential)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           session.id,
           session.drillId,
           session.drillName,
@@ -371,6 +393,7 @@ export function createSqliteStore(db: SqlDb): AppStore {
           session.notes,
           session.summaryScore,
           session.summaryValue,
+          session.differential,
         );
       }
       for (const attempt of snapshot.attempts) {
