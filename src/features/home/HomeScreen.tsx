@@ -1,22 +1,25 @@
 import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { Button } from '@/src/components/ui/Button';
 import { Screen } from '@/src/components/ui/Screen';
 import { Text } from '@/src/components/ui/Text';
 import { useStore } from '@/src/db/StoreContext';
 import { formatRelativeDay } from '@/src/domain/format';
-import { getLastCompletedSession, listDrills } from '@/src/services/drills';
+import { getLastCompletedSession } from '@/src/services/drills';
 import { getSettings } from '@/src/services/settings';
 import { getActiveSession } from '@/src/services/sessions';
-import { colors, spacing } from '@/src/theme';
+import { spacing } from '@/src/theme';
 
+/**
+ * Home = one composition: brand, status, one primary action.
+ * Resume or repeat is secondary — never a link farm.
+ */
 export function HomeScreen() {
   const store = useStore();
   const router = useRouter();
   const [displayName, setDisplayName] = useState('');
-  const [drillCount, setDrillCount] = useState(0);
   const [active, setActive] = useState<{
     id: string;
     drillName: string;
@@ -26,24 +29,30 @@ export function HomeScreen() {
     drillName: string;
     startedAt: string;
     summaryScore: string | null;
-    sessionId: string;
   } | null>(null);
 
   const refresh = useCallback(async () => {
-    const [settings, activeSession, lastSession, drills] = await Promise.all([
+    const [settings, activeSession, lastSession] = await Promise.all([
       getSettings(store),
       getActiveSession(store),
       getLastCompletedSession(store),
-      listDrills(store),
     ]);
     setDisplayName(settings.displayName);
-    setDrillCount(drills.length);
     setActive(
       activeSession
         ? { id: activeSession.id, drillName: activeSession.drillName }
         : null,
     );
-    setLast(lastSession);
+    setLast(
+      lastSession
+        ? {
+            drillId: lastSession.drillId,
+            drillName: lastSession.drillName,
+            startedAt: lastSession.startedAt,
+            summaryScore: lastSession.summaryScore,
+          }
+        : null,
+    );
   }, [store]);
 
   useFocusEffect(
@@ -52,15 +61,22 @@ export function HomeScreen() {
     }, [refresh]),
   );
 
-  const statusLine = (() => {
-    const greeting = displayName ? `Hi ${displayName}. ` : '';
-    if (active) return `${greeting}You have a session in progress.`;
-    if (last) {
-      return `${greeting}Last session ${formatRelativeDay(last.startedAt)}${
-        last.summaryScore ? ` · ${last.summaryScore}` : ''
-      }.`;
+  const status = (() => {
+    if (active) {
+      return displayName
+        ? `${displayName} · session in progress`
+        : 'Session in progress';
     }
-    return `${greeting}Ready when you are.`;
+    if (last) {
+      const when = formatRelativeDay(last.startedAt);
+      const score = last.summaryScore ? ` · ${last.summaryScore}` : '';
+      return displayName
+        ? `${displayName} · last practiced ${when}${score}`
+        : `Last practiced ${when}${score}`;
+    }
+    return displayName
+      ? `${displayName} · ready to practice`
+      : 'Ready to practice';
   })();
 
   return (
@@ -68,71 +84,45 @@ export function HomeScreen() {
       <View style={styles.hero}>
         <Text variant="brand">The Range</Text>
         <Text muted style={styles.status}>
-          {statusLine}
+          {status}
         </Text>
       </View>
 
       <View style={styles.actions}>
         {active ? (
-          <Button
-            label={`Continue ${active.drillName}`}
-            onPress={() =>
-              router.push({
-                pathname: '/session/active',
-                params: { sessionId: active.id },
-              })
-            }
-          />
-        ) : (
-          <Button
-            label="Browse drills"
-            onPress={() => router.push('/(tabs)/drills')}
-          />
-        )}
-
-        {!active && last ? (
-          <Button
-            label={`Repeat ${last.drillName}`}
-            variant="secondary"
-            onPress={() => router.push(`/drill/${last.drillId}`)}
-          />
-        ) : null}
-
-        {active ? (
-          <Button
-            label="Browse drills"
-            variant="ghost"
-            onPress={() => router.push('/(tabs)/drills')}
-          />
-        ) : null}
-      </View>
-
-      <View style={styles.links}>
-        {last ? (
-          <Pressable
-            onPress={() => router.push(`/session/${last.sessionId}`)}
-            accessibilityRole="button"
-            style={styles.linkRow}
-          >
-            <Text variant="secondary" color={colors.accent}>
-              View last session
+          <>
+            <Button
+              label="Continue session"
+              onPress={() =>
+                router.push({
+                  pathname: '/session/active',
+                  params: { sessionId: active.id },
+                })
+              }
+            />
+            <Text muted variant="secondary" style={styles.caption}>
+              {active.drillName}
             </Text>
-          </Pressable>
-        ) : null}
-        <Pressable
-          onPress={() => router.push('/(tabs)/history')}
-          accessibilityRole="button"
-          style={styles.linkRow}
-        >
-          <Text variant="secondary" color={colors.accent}>
-            Open history
-          </Text>
-        </Pressable>
-        {!last && drillCount > 0 ? (
-          <Text muted variant="secondary" style={styles.hint}>
-            {drillCount} drills ready · pick one and tap Start
-          </Text>
-        ) : null}
+          </>
+        ) : (
+          <>
+            <Button
+              label="Find a drill"
+              onPress={() => router.push('/(tabs)/drills')}
+            />
+            {last ? (
+              <Button
+                label="Repeat last drill"
+                variant="secondary"
+                onPress={() => router.push(`/drill/${last.drillId}`)}
+              />
+            ) : (
+              <Text muted variant="secondary" style={styles.caption}>
+                Pick a drill, then tap Start
+              </Text>
+            )}
+          </>
+        )}
       </View>
     </Screen>
   );
@@ -140,25 +130,21 @@ export function HomeScreen() {
 
 const styles = StyleSheet.create({
   hero: {
-    paddingTop: spacing.lg,
-    gap: spacing.xs,
+    flexGrow: 1,
+    justifyContent: 'flex-end',
+    paddingBottom: spacing.lg,
+    minHeight: 220,
   },
   status: {
-    marginTop: spacing.xs,
+    marginTop: spacing.sm,
+    maxWidth: 320,
   },
   actions: {
-    marginTop: spacing.xl,
     gap: spacing.sm,
+    paddingBottom: spacing.md,
   },
-  links: {
-    marginTop: spacing.lg,
-    gap: spacing.xs,
-  },
-  linkRow: {
-    minHeight: 44,
-    justifyContent: 'center',
-  },
-  hint: {
-    marginTop: spacing.sm,
+  caption: {
+    textAlign: 'center',
+    marginTop: spacing.xs,
   },
 });
