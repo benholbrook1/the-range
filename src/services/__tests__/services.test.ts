@@ -11,6 +11,7 @@ import {
   tryInstallPackPayload,
   uninstallPack,
 } from '@/src/services/packs';
+import { getHandicapSnapshot } from '@/src/services/handicap';
 import {
   completeSession,
   discardActiveSession,
@@ -98,9 +99,31 @@ describe('services with memory store', () => {
     }
     const finished = await completeSession(store, low.id);
     expect(finished.summaryScore).toMatch(/^5 /);
+    expect(finished.differential).toBe(-1); // 5 strokes vs par 6
 
     const best = await getPersonalBest(store, 'par-18');
     expect(best?.value).toBe(5);
+  });
+
+  it('builds area handicaps from completed differentials', async () => {
+    const store = createMemoryStore();
+    await bootstrapApp(store);
+
+    const session = await startSession(store, 'gate-keeper');
+    for (let i = 0; i < 10; i++) {
+      await logAttempt(store, session.id, {
+        type: 'makes_out_of',
+        made: i < 8,
+      });
+    }
+    const done = await completeSession(store, session.id);
+    expect(done.differential).toBe(7.2); // miss rate 0.2 * 36
+
+    const snap = await getHandicapSnapshot(store);
+    const putting = snap.areas.find((a) => a.category === 'putting');
+    expect(putting?.index).toBe(7.2);
+    expect(putting?.rounds).toBe(1);
+    expect(snap.overall).toBe(7.2);
   });
 
   it('discards active session and can start another', async () => {

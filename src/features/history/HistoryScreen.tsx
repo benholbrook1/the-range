@@ -137,6 +137,9 @@ export function HistoryScreen() {
                       <Text variant="subtitle">{session.drillName}</Text>
                       <Text muted variant="secondary">
                         {categoryLabel(session.drillCategory)}
+                        {session.differential != null
+                          ? ` · diff ${session.differential > 0 ? '+' : ''}${session.differential.toFixed(1)}`
+                          : ''}
                       </Text>
                     </View>
                   </Pressable>

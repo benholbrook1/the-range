@@ -63,6 +63,8 @@ export async function getLastCompletedSession(
   startedAt: string;
   summaryScore: string | null;
   sessionId: string;
+  differential: number | null;
+  drillCategory: import('@/src/domain/types').DrillCategory;
 } | null> {
   const sessions = await store.listSessions({ status: 'completed' });
   if (sessions.length === 0) return null;
@@ -73,6 +75,8 @@ export async function getLastCompletedSession(
     startedAt: s.startedAt,
     summaryScore: s.summaryScore,
     sessionId: s.id,
+    differential: s.differential,
+    drillCategory: s.drillCategory,
   };
 }
 

@@ -77,6 +77,8 @@ export type Session = {
   notes: string | null;
   summaryScore: string | null;
   summaryValue: number | null;
+  /** Game differential posted to area handicap (lower is better). */
+  differential: number | null;
 };
 
 export type AttemptPayload =

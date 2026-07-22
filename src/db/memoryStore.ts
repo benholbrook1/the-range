@@ -49,7 +49,12 @@ export type AppStore = {
     patch: Partial<
       Pick<
         Session,
-        'status' | 'endedAt' | 'notes' | 'summaryScore' | 'summaryValue'
+        | 'status'
+        | 'endedAt'
+        | 'notes'
+        | 'summaryScore'
+        | 'summaryValue'
+        | 'differential'
       >
     >,
   ): Promise<Session>;
@@ -149,6 +154,7 @@ export function createMemoryStore(
         notes: null,
         summaryScore: null,
         summaryValue: null,
+        differential: null,
       };
       sessions.unshift(clone(session));
       notify();
