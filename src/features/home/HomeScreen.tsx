@@ -97,7 +97,7 @@ export function HomeScreen() {
       const when = formatRelativeDay(last.startedAt);
       return `${last.drillName} · ${when}`;
     }
-    return displayName ? `Welcome, ${displayName}` : 'Pick a drill and start logging.';
+    return displayName ? `Welcome, ${displayName}` : 'Pick a game and start logging.';
   })();
 
   return (

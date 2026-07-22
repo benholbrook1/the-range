@@ -100,9 +100,9 @@ export function HistoryScreen() {
           message={
             hasFilter
               ? 'Switch category, or clear to All.'
-              : 'Complete a drill and your scores land here.'
+              : 'Complete a game and your scores land here.'
           }
-          actionLabel={hasFilter ? 'Show all' : 'Find a drill'}
+          actionLabel={hasFilter ? 'Show all' : 'Find a game'}
           onAction={
             hasFilter
               ? () => setCategory('all')
