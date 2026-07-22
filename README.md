@@ -35,19 +35,26 @@ This installs a real app via Xcode signing. Free Apple Developer profiles expire
 1. On your Mac: install Xcode from the App Store, open it once, and accept the license.
 2. **Xcode → Settings → Accounts** → add your Apple ID.
 3. On the iPhone: enable **Developer Mode** (Settings → Privacy & Security) and connect with a cable. Trust the computer.
-4. In the project:
+4. In the project, install a **Release** build (JS is embedded — no Metro required):
 
 ```bash
 git checkout main
 git pull origin main
 npm install
-npm run ios:device
+npm run ios:device:release
 ```
 
 5. When prompted, pick your iPhone. First run may open Xcode — select your **Personal Team** for signing if asked.
 6. On the phone, if it won’t open: **Settings → General → VPN & Device Management** → trust your developer certificate.
 
 Bundle ID: `com.therange.app` (change in `app.json` if that ID is already taken on your account).
+
+### “No script URL provided”
+
+That means you installed a **Debug** build (`npm run ios:device`), which expects Metro on your Mac. Either:
+
+- Use the Release command above (`ios:device:release`), or
+- Keep Debug and run `npm start` on the Mac while the phone is on the **same Wi‑Fi**, then reopen the app.
 
 **Faster alternative:** install **Expo Go** from the App Store, run `npm start`, and scan the QR code. No signing needed; good for quick checks.
 
