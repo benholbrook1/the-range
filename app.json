@@ -8,7 +8,9 @@
     "scheme": "therange",
     "userInterfaceStyle": "light",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.therange.app",
+      "buildNumber": "1"
     },
     "android": {
       "adaptiveIcon": {
