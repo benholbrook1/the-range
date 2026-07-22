@@ -1,4 +1,10 @@
-import { summarizeAttempts, createAttemptPayload } from '@/src/domain/scoring';
+import {
+  summarizeAttempts,
+  createAttemptPayload,
+  describeScoring,
+  isLowerBetter,
+  targetAttemptCount,
+} from '@/src/domain/scoring';
 import type { ScoringConfig } from '@/src/domain/types';
 
 describe('summarizeAttempts', () => {
@@ -61,6 +67,36 @@ describe('summarizeAttempts', () => {
     expect(summary.value).toBe(7);
     expect(summary.label).toBe('7');
   });
+
+  it('tracks strokes vs par', () => {
+    const scoring: ScoringConfig = {
+      type: 'strokes',
+      holes: 18,
+      parPerHole: 2,
+      unit: 'strokes',
+    };
+    const summary = summarizeAttempts(scoring, [
+      { payload: { type: 'strokes', strokes: 1 } },
+      { payload: { type: 'strokes', strokes: 2 } },
+      { payload: { type: 'strokes', strokes: 3 } },
+    ]);
+    expect(summary.value).toBe(6);
+    expect(summary.label).toBe('6 (E)');
+  });
+
+  it('shows under par for strokes', () => {
+    const scoring: ScoringConfig = {
+      type: 'strokes',
+      holes: 18,
+      parPerHole: 2,
+      unit: 'strokes',
+    };
+    const summary = summarizeAttempts(scoring, [
+      { payload: { type: 'strokes', strokes: 1 } },
+      { payload: { type: 'strokes', strokes: 1 } },
+    ]);
+    expect(summary.label).toBe('2 (-2)');
+  });
 });
 
 describe('createAttemptPayload', () => {
@@ -77,5 +113,56 @@ describe('createAttemptPayload', () => {
     expect(
       createAttemptPayload({ type: 'score_total', unit: 'x' }, { points: 2 }),
     ).toEqual({ type: 'score_total', points: 2 });
+    expect(
+      createAttemptPayload(
+        { type: 'strokes', holes: 18, parPerHole: 2, unit: 'strokes' },
+        { strokes: 2 },
+      ),
+    ).toEqual({ type: 'strokes', strokes: 2 });
+  });
+});
+
+describe('scoring helpers', () => {
+  it('marks strokes as lower-better', () => {
+    expect(
+      isLowerBetter({
+        type: 'strokes',
+        holes: 18,
+        parPerHole: 2,
+        unit: 'strokes',
+      }),
+    ).toBe(true);
+    expect(
+      isLowerBetter({ type: 'makes_out_of', attempts: 10, unit: 'putts' }),
+    ).toBe(false);
+  });
+
+  it('resolves target attempt counts', () => {
+    expect(
+      targetAttemptCount({
+        type: 'strokes',
+        holes: 18,
+        parPerHole: 2,
+        unit: 'strokes',
+      }),
+    ).toBe(18);
+    expect(
+      targetAttemptCount({
+        type: 'score_total',
+        unit: 'points',
+        attempts: 10,
+      }),
+    ).toBe(10);
+  });
+
+  it('describes strokes scoring', () => {
+    expect(
+      describeScoring({
+        type: 'strokes',
+        holes: 18,
+        parPerHole: 2,
+        unit: 'strokes',
+      }),
+    ).toMatch(/Lower is better/);
   });
 });

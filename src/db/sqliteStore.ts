@@ -29,6 +29,7 @@ async function migrate(db: SqlDb) {
       estimated_minutes REAL NOT NULL,
       instructions_json TEXT NOT NULL,
       scoring_json TEXT NOT NULL,
+      visual TEXT,
       FOREIGN KEY (pack_id) REFERENCES packs(id) ON DELETE CASCADE
     );
     CREATE TABLE IF NOT EXISTS sessions (
@@ -56,6 +57,13 @@ async function migrate(db: SqlDb) {
       value TEXT NOT NULL
     );
   `);
+
+  // Existing installs created before `visual` existed.
+  try {
+    await db.execAsync('ALTER TABLE drills ADD COLUMN visual TEXT');
+  } catch {
+    // Column already present.
+  }
 }
 
 function mapPack(row: Record<string, unknown>): Pack {
@@ -77,6 +85,10 @@ function mapDrill(row: Record<string, unknown>): Drill {
     estimatedMinutes: Number(row.estimated_minutes),
     instructions: JSON.parse(String(row.instructions_json)) as string[],
     scoring: JSON.parse(String(row.scoring_json)) as Drill['scoring'],
+    visual:
+      row.visual == null || row.visual === ''
+        ? undefined
+        : (String(row.visual) as Drill['visual']),
   };
 }
 
@@ -155,8 +167,8 @@ export function createSqliteStore(db: SqlDb): AppStore {
         for (const drill of drills) {
           await db.runAsync(
             `INSERT INTO drills
-              (id, pack_id, name, category, estimated_minutes, instructions_json, scoring_json)
-             VALUES (?, ?, ?, ?, ?, ?, ?)`,
+              (id, pack_id, name, category, estimated_minutes, instructions_json, scoring_json, visual)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
             drill.id,
             drill.packId,
             drill.name,
@@ -164,6 +176,7 @@ export function createSqliteStore(db: SqlDb): AppStore {
             drill.estimatedMinutes,
             JSON.stringify(drill.instructions),
             JSON.stringify(drill.scoring),
+            drill.visual ?? null,
           );
         }
       });

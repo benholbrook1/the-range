@@ -117,7 +117,7 @@ export function HomeScreen() {
         ) : (
           <>
             <Button
-              label="Find a drill"
+              label="Find a game"
               onPress={() => router.push('/(tabs)/drills')}
             />
             {last ? (

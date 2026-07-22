@@ -7,13 +7,14 @@ import {
 import React, { useCallback, useLayoutEffect, useState } from 'react';
 import { Alert, StyleSheet, View } from 'react-native';
 
+import { DrillVisual } from '@/src/components/drills/DrillVisual';
 import { Button } from '@/src/components/ui/Button';
 import { Screen } from '@/src/components/ui/Screen';
 import { SectionHeader } from '@/src/components/ui/SectionHeader';
 import { Text } from '@/src/components/ui/Text';
 import { useStore } from '@/src/db/StoreContext';
 import { categoryLabel } from '@/src/domain/categories';
-import { describeScoring } from '@/src/domain/scoring';
+import { describeScoring, isLowerBetter } from '@/src/domain/scoring';
 import type { Drill, Session } from '@/src/domain/types';
 import {
   getDrill,
@@ -146,7 +147,8 @@ export function DrillDetailScreen() {
   }
 
   const sameActive = active?.drillId === drill.id;
-  const primaryLabel = sameActive ? 'Continue session' : 'Start practice';
+  const primaryLabel = sameActive ? 'Continue session' : 'Start game';
+  const bestHint = isLowerBetter(drill.scoring) ? ' (low)' : '';
 
   return (
     <Screen
@@ -155,11 +157,15 @@ export function DrillDetailScreen() {
         <Button label={primaryLabel} onPress={onPrimary} disabled={starting} />
       }
     >
+      {drill.visual ? (
+        <DrillVisual id={drill.visual} size="detail" style={styles.visual} />
+      ) : null}
+
       <Text muted style={styles.meta}>
         {categoryLabel(drill.category)} · {drill.estimatedMinutes} min
       </Text>
 
-      <SectionHeader title="Setup" />
+      <SectionHeader title="How to play" />
       {drill.instructions.map((line, index) => (
         <Text key={index} style={styles.instruction}>
           {index + 1}. {line}
@@ -173,7 +179,9 @@ export function DrillDetailScreen() {
 
       <View style={styles.stats}>
         <Text muted>
-          {best ? `Personal best: ${best}` : 'No personal best yet'}
+          {best
+            ? `Personal best${bestHint}: ${best}`
+            : 'No personal best yet'}
         </Text>
         <Text muted>
           {last ? `Last score: ${last}` : 'No previous score yet'}
@@ -184,6 +192,9 @@ export function DrillDetailScreen() {
 }
 
 const styles = StyleSheet.create({
+  visual: {
+    marginBottom: spacing.md,
+  },
   meta: {
     marginBottom: spacing.xs,
   },

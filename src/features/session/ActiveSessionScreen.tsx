@@ -14,7 +14,11 @@ import { Screen } from '@/src/components/ui/Screen';
 import { SectionHeader } from '@/src/components/ui/SectionHeader';
 import { Text } from '@/src/components/ui/Text';
 import { useStore } from '@/src/db/StoreContext';
-import { createAttemptPayload, summarizeAttempts } from '@/src/domain/scoring';
+import {
+  createAttemptPayload,
+  summarizeAttempts,
+  targetAttemptCount,
+} from '@/src/domain/scoring';
 import type { Attempt, Drill, Session } from '@/src/domain/types';
 import {
   completeSession,
@@ -63,8 +67,7 @@ export function ActiveSessionScreen() {
     return summarizeAttempts(drill.scoring, attempts);
   }, [drill, attempts]);
 
-  const targetAttempts =
-    drill?.scoring.type === 'makes_out_of' ? drill.scoring.attempts : null;
+  const targetAttempts = drill ? targetAttemptCount(drill.scoring) : null;
   const isTargetReached =
     targetAttempts != null && attempts.length >= targetAttempts;
 
@@ -75,16 +78,29 @@ export function ActiveSessionScreen() {
   }, [session, store, notes, router]);
 
   const onLog = useCallback(
-    async (input: { made?: boolean; count?: number; points?: number }) => {
+    async (input: {
+      made?: boolean;
+      count?: number;
+      points?: number;
+      strokes?: number;
+    }) => {
       if (!session || !drill) return;
       if (session.status !== 'active') return;
+      if (
+        targetAttempts != null &&
+        attempts.length >= targetAttempts &&
+        drill.scoring.type === 'strokes'
+      ) {
+        Alert.alert('Round complete', 'All balls are logged. Save when ready.');
+        return;
+      }
       const payload = createAttemptPayload(drill.scoring, input);
       await logAttempt(store, session.id, payload);
       setFlash(true);
       setTimeout(() => setFlash(false), 180);
       await refresh();
     },
-    [session, drill, store, refresh],
+    [session, drill, store, refresh, targetAttempts, attempts.length],
   );
 
   useEffect(() => {
@@ -180,6 +196,11 @@ export function ActiveSessionScreen() {
     );
   }
 
+  const ballLabel =
+    drill.scoring.type === 'strokes'
+      ? `Ball ${Math.min(attempts.length + 1, drill.scoring.holes)} of ${drill.scoring.holes}`
+      : null;
+
   return (
     <Screen
       scroll
@@ -197,8 +218,11 @@ export function ActiveSessionScreen() {
         {summary?.label ?? '0'}
       </Text>
       <Text muted>
-        {attempts.length} logged
-        {targetAttempts != null ? ` of ${targetAttempts}` : ''}
+        {ballLabel
+          ? ballLabel
+          : `${attempts.length} logged${
+              targetAttempts != null ? ` of ${targetAttempts}` : ''
+            }`}
       </Text>
       {targetAttempts != null ? (
         <ProgressBar value={attempts.length} max={targetAttempts} />
@@ -236,18 +260,79 @@ export function ActiveSessionScreen() {
           </View>
         ) : null}
 
+        {drill.scoring.type === 'strokes' ? (
+          <View style={styles.stack}>
+            <Text muted variant="secondary">
+              Strokes for this ball
+            </Text>
+            <View style={styles.row}>
+              <Button
+                label="1"
+                onPress={() => onLog({ strokes: 1 })}
+                style={styles.quarter}
+              />
+              <Button
+                label="2"
+                onPress={() => onLog({ strokes: 2 })}
+                style={styles.quarter}
+              />
+              <Button
+                label="3"
+                variant="secondary"
+                onPress={() => onLog({ strokes: 3 })}
+                style={styles.quarter}
+              />
+              <Button
+                label="4+"
+                variant="secondary"
+                onPress={() => onLog({ strokes: 4 })}
+                style={styles.quarter}
+              />
+            </View>
+          </View>
+        ) : null}
+
         {drill.scoring.type === 'score_total' ? (
           <View style={styles.stack}>
-            <TextInput
-              value={pointsInput}
-              onChangeText={setPointsInput}
-              keyboardType="number-pad"
-              style={styles.input}
-            />
-            <Button
-              label="Add points"
-              onPress={() => onLog({ points: Number(pointsInput) || 0 })}
-            />
+            {drill.scoring.attempts != null ? (
+              <View style={styles.row}>
+                <Button
+                  label="0"
+                  variant="secondary"
+                  onPress={() => onLog({ points: 0 })}
+                  style={styles.quarter}
+                />
+                <Button
+                  label="1"
+                  variant="secondary"
+                  onPress={() => onLog({ points: 1 })}
+                  style={styles.quarter}
+                />
+                <Button
+                  label="2"
+                  onPress={() => onLog({ points: 2 })}
+                  style={styles.quarter}
+                />
+                <Button
+                  label="3"
+                  onPress={() => onLog({ points: 3 })}
+                  style={styles.quarter}
+                />
+              </View>
+            ) : (
+              <>
+                <TextInput
+                  value={pointsInput}
+                  onChangeText={setPointsInput}
+                  keyboardType="number-pad"
+                  style={styles.input}
+                />
+                <Button
+                  label="Add points"
+                  onPress={() => onLog({ points: Number(pointsInput) || 0 })}
+                />
+              </>
+            )}
           </View>
         ) : null}
 
@@ -285,9 +370,12 @@ const styles = StyleSheet.create({
   },
   row: {
     flexDirection: 'row',
-    gap: spacing.sm,
+    gap: spacing.xs,
   },
   half: {
+    flex: 1,
+  },
+  quarter: {
     flex: 1,
   },
   stack: {

@@ -1,6 +1,16 @@
 export type DrillCategory = 'putting' | 'short_game' | 'full_swing' | 'other';
 
-export type ScoringType = 'makes_out_of' | 'reps' | 'score_total';
+export type DrillVisualId =
+  | 'par18'
+  | 'clock'
+  | 'gate'
+  | 'lag'
+  | 'rings'
+  | 'corridor'
+  | 'ladder'
+  | 'pressure';
+
+export type ScoringType = 'makes_out_of' | 'reps' | 'score_total' | 'strokes';
 
 export type MakesOutOfScoring = {
   type: 'makes_out_of';
@@ -17,9 +27,22 @@ export type RepsScoring = {
 export type ScoreTotalScoring = {
   type: 'score_total';
   unit: string;
+  /** Optional fixed number of shots for progress / completion prompts. */
+  attempts?: number;
 };
 
-export type ScoringConfig = MakesOutOfScoring | RepsScoring | ScoreTotalScoring;
+export type StrokesScoring = {
+  type: 'strokes';
+  holes: number;
+  parPerHole: number;
+  unit: string;
+};
+
+export type ScoringConfig =
+  | MakesOutOfScoring
+  | RepsScoring
+  | ScoreTotalScoring
+  | StrokesScoring;
 
 export type Pack = {
   id: string;
@@ -37,6 +60,8 @@ export type Drill = {
   estimatedMinutes: number;
   instructions: string[];
   scoring: ScoringConfig;
+  /** Diagram key for consistent on-screen visuals. */
+  visual?: DrillVisualId;
 };
 
 export type SessionStatus = 'active' | 'completed';
@@ -57,7 +82,8 @@ export type Session = {
 export type AttemptPayload =
   | { type: 'makes_out_of'; made: boolean }
   | { type: 'reps'; count: number }
-  | { type: 'score_total'; points: number };
+  | { type: 'score_total'; points: number }
+  | { type: 'strokes'; strokes: number };
 
 export type Attempt = {
   id: string;

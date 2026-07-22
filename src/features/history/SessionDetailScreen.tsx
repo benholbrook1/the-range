@@ -135,6 +135,9 @@ function describePayload(attempt: Attempt): string {
   const p = attempt.payload;
   if (p.type === 'makes_out_of') return p.made ? 'Make' : 'Miss';
   if (p.type === 'reps') return `${p.count} reps`;
+  if (p.type === 'strokes') {
+    return p.strokes === 1 ? '1 stroke' : `${p.strokes} strokes`;
+  }
   return `${p.points} points`;
 }
 
