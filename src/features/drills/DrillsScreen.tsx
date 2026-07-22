@@ -20,12 +20,17 @@ export function DrillsScreen() {
   const store = useStore();
   const router = useRouter();
   const [drills, setDrills] = useState<Drill[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState<DrillCategory | 'all'>('all');
 
   const refresh = useCallback(async () => {
-    const rows = await listDrills(store, { query, category });
+    const [rows, all] = await Promise.all([
+      listDrills(store, { query, category }),
+      listDrills(store),
+    ]);
     setDrills(rows);
+    setTotalCount(all.length);
   }, [store, query, category]);
 
   useFocusEffect(
@@ -62,12 +67,31 @@ export function DrillsScreen() {
     }
   }, [store, refresh]);
 
-  const empty = useMemo(() => drills.length === 0, [drills.length]);
+  const filteredEmpty = drills.length === 0;
+  const hasFilters = query.trim().length > 0 || category !== 'all';
+
+  const clearFilters = useCallback(() => {
+    setQuery('');
+    setCategory('all');
+  }, []);
+
+  const subtitle = useMemo(() => {
+    if (filteredEmpty) return null;
+    if (hasFilters) return `${drills.length} of ${totalCount} drills`;
+    return `${totalCount} drills`;
+  }, [filteredEmpty, hasFilters, drills.length, totalCount]);
 
   return (
     <Screen scroll>
       <View style={styles.header}>
-        <Text variant="title">Drills</Text>
+        <View style={styles.titleBlock}>
+          <Text variant="title">Drills</Text>
+          {subtitle ? (
+            <Text muted variant="secondary">
+              {subtitle}
+            </Text>
+          ) : null}
+        </View>
         <Button label="Import pack" variant="ghost" onPress={importPack} />
       </View>
 
@@ -79,16 +103,21 @@ export function DrillsScreen() {
         style={styles.search}
         autoCorrect={false}
         autoCapitalize="none"
+        clearButtonMode="while-editing"
       />
 
       <CategoryFilter value={category} onChange={setCategory} />
 
-      {empty ? (
+      {filteredEmpty ? (
         <EmptyState
-          title="No drills found"
-          message="Import a pack or clear filters."
-          actionLabel="Import pack"
-          onAction={importPack}
+          title={hasFilters ? 'No matching drills' : 'No drills yet'}
+          message={
+            hasFilters
+              ? 'Try clearing search or category filters.'
+              : 'Import a pack to get started.'
+          }
+          actionLabel={hasFilters ? 'Clear filters' : 'Import pack'}
+          onAction={hasFilters ? clearFilters : importPack}
         />
       ) : (
         drills.map((drill) => (
@@ -112,9 +141,14 @@ export function DrillsScreen() {
 const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'space-between',
     marginBottom: spacing.sm,
+  },
+  titleBlock: {
+    flex: 1,
+    gap: 2,
+    paddingRight: spacing.sm,
   },
   search: {
     borderBottomWidth: StyleSheet.hairlineWidth,

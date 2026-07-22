@@ -48,7 +48,13 @@ export async function getLastScore(
 
 export async function getLastCompletedSession(
   store: AppStore,
-): Promise<{ drillId: string; drillName: string; startedAt: string } | null> {
+): Promise<{
+  drillId: string;
+  drillName: string;
+  startedAt: string;
+  summaryScore: string | null;
+  sessionId: string;
+} | null> {
   const sessions = await store.listSessions({ status: 'completed' });
   if (sessions.length === 0) return null;
   const s = sessions[0];
@@ -56,6 +62,8 @@ export async function getLastCompletedSession(
     drillId: s.drillId,
     drillName: s.drillName,
     startedAt: s.startedAt,
+    summaryScore: s.summaryScore,
+    sessionId: s.id,
   };
 }
 

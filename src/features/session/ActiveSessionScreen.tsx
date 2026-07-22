@@ -1,9 +1,17 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useState,
+} from 'react';
 import { Alert, StyleSheet, TextInput, View } from 'react-native';
 
 import { Button } from '@/src/components/ui/Button';
+import { ProgressBar } from '@/src/components/ui/ProgressBar';
 import { Screen } from '@/src/components/ui/Screen';
+import { SectionHeader } from '@/src/components/ui/SectionHeader';
 import { Text } from '@/src/components/ui/Text';
 import { useStore } from '@/src/db/StoreContext';
 import { createAttemptPayload, summarizeAttempts } from '@/src/domain/scoring';
@@ -21,6 +29,7 @@ export function ActiveSessionScreen() {
   const { sessionId } = useLocalSearchParams<{ sessionId: string }>();
   const store = useStore();
   const router = useRouter();
+  const navigation = useNavigation();
   const [session, setSession] = useState<Session | null>(null);
   const [drill, setDrill] = useState<Drill | null>(null);
   const [attempts, setAttempts] = useState<Attempt[]>([]);
@@ -28,6 +37,7 @@ export function ActiveSessionScreen() {
   const [flash, setFlash] = useState(false);
   const [repsInput, setRepsInput] = useState('1');
   const [pointsInput, setPointsInput] = useState('1');
+  const [offeredComplete, setOfferedComplete] = useState(false);
 
   const refresh = useCallback(async () => {
     if (!sessionId) return;
@@ -42,10 +52,27 @@ export function ActiveSessionScreen() {
     void refresh();
   }, [refresh]);
 
+  useLayoutEffect(() => {
+    if (drill) {
+      navigation.setOptions({ title: drill.name });
+    }
+  }, [navigation, drill]);
+
   const summary = useMemo(() => {
     if (!drill) return null;
     return summarizeAttempts(drill.scoring, attempts);
   }, [drill, attempts]);
+
+  const targetAttempts =
+    drill?.scoring.type === 'makes_out_of' ? drill.scoring.attempts : null;
+  const isTargetReached =
+    targetAttempts != null && attempts.length >= targetAttempts;
+
+  const saveAndFinish = useCallback(async () => {
+    if (!session) return;
+    const completed = await completeSession(store, session.id, notes);
+    router.replace(`/session/${completed.id}`);
+  }, [session, store, notes, router]);
 
   const onLog = useCallback(
     async (input: { made?: boolean; count?: number; points?: number }) => {
@@ -60,6 +87,20 @@ export function ActiveSessionScreen() {
     [session, drill, store, refresh],
   );
 
+  useEffect(() => {
+    if (!isTargetReached || offeredComplete || !session) return;
+    setOfferedComplete(true);
+    Alert.alert('Target reached', 'Save this session now?', [
+      { text: 'Keep going', style: 'cancel' },
+      {
+        text: 'Save',
+        onPress: () => {
+          void saveAndFinish();
+        },
+      },
+    ]);
+  }, [isTargetReached, offeredComplete, session, saveAndFinish]);
+
   const onUndo = useCallback(async () => {
     if (!session) return;
     const removed = await undoLastAttempt(store, session.id);
@@ -67,21 +108,29 @@ export function ActiveSessionScreen() {
       Alert.alert('Nothing to undo');
       return;
     }
+    setOfferedComplete(false);
     await refresh();
   }, [session, store, refresh]);
 
-  const onComplete = useCallback(async () => {
+  const onComplete = useCallback(() => {
     if (!session) return;
-    try {
-      const completed = await completeSession(store, session.id, notes);
-      router.replace(`/session/${completed.id}`);
-    } catch (e) {
+    if (attempts.length === 0) {
       Alert.alert(
-        'Could not save',
-        e instanceof Error ? e.message : 'Unknown error',
+        'No attempts yet',
+        'Log at least one attempt, or discard this session.',
       );
+      return;
     }
-  }, [session, store, notes, router]);
+    Alert.alert('End session?', 'Save your score to History.', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Save',
+        onPress: () => {
+          void saveAndFinish();
+        },
+      },
+    ]);
+  }, [session, attempts.length, saveAndFinish]);
 
   const onDiscard = useCallback(() => {
     Alert.alert(
@@ -94,7 +143,11 @@ export function ActiveSessionScreen() {
           style: 'destructive',
           onPress: async () => {
             await discardActiveSession(store);
-            router.replace('/(tabs)/drills');
+            if (router.canGoBack()) {
+              router.back();
+            } else {
+              router.replace('/(tabs)/drills');
+            }
           },
         },
       ],
@@ -111,22 +164,32 @@ export function ActiveSessionScreen() {
 
   if (session.status !== 'active') {
     return (
-      <Screen>
-        <Text variant="title">Session finished</Text>
-        <Button
-          label="View details"
-          onPress={() => router.replace(`/session/${session.id}`)}
-          style={{ marginTop: spacing.md }}
-        />
+      <Screen
+        footer={
+          <Button
+            label="View results"
+            onPress={() => router.replace(`/session/${session.id}`)}
+          />
+        }
+      >
+        <Text variant="title">Session saved</Text>
+        <Text muted style={{ marginTop: spacing.xs }}>
+          Your score is in History.
+        </Text>
       </Screen>
     );
   }
 
   return (
-    <Screen scroll>
-      <Text muted variant="secondary">
-        {drill.name}
-      </Text>
+    <Screen
+      scroll
+      footer={
+        <>
+          <Button label="End & save" onPress={onComplete} />
+          <Button label="Discard" variant="ghost" onPress={onDiscard} />
+        </>
+      }
+    >
       <Text
         variant="brand"
         style={[styles.counter, flash ? styles.flash : null]}
@@ -135,10 +198,11 @@ export function ActiveSessionScreen() {
       </Text>
       <Text muted>
         {attempts.length} logged
-        {drill.scoring.type === 'makes_out_of'
-          ? ` · ${drill.scoring.attempts} target`
-          : ''}
+        {targetAttempts != null ? ` of ${targetAttempts}` : ''}
       </Text>
+      {targetAttempts != null ? (
+        <ProgressBar value={attempts.length} max={targetAttempts} />
+      ) : null}
 
       <View style={styles.controls}>
         {drill.scoring.type === 'makes_out_of' ? (
@@ -195,24 +259,14 @@ export function ActiveSessionScreen() {
         />
       </View>
 
-      <Text variant="subtitle" style={styles.section}>
-        Notes
-      </Text>
+      <SectionHeader title="Notes" subtitle="Optional — saved with the session" />
       <TextInput
         value={notes}
         onChangeText={setNotes}
-        placeholder="Optional notes"
+        placeholder="How did it feel?"
         placeholderTextColor={colors.textMuted}
         style={[styles.input, styles.notes]}
         multiline
-      />
-
-      <Button label="End & save" onPress={onComplete} style={styles.save} />
-      <Button
-        label="Discard session"
-        variant="danger"
-        onPress={onDiscard}
-        style={styles.discard}
       />
     </Screen>
   );
@@ -220,7 +274,7 @@ export function ActiveSessionScreen() {
 
 const styles = StyleSheet.create({
   counter: {
-    marginTop: spacing.sm,
+    marginTop: spacing.xs,
   },
   flash: {
     color: colors.success,
@@ -251,15 +305,5 @@ const styles = StyleSheet.create({
   notes: {
     minHeight: 88,
     textAlignVertical: 'top',
-  },
-  section: {
-    marginTop: spacing.lg,
-    marginBottom: spacing.xs,
-  },
-  save: {
-    marginTop: spacing.lg,
-  },
-  discard: {
-    marginTop: spacing.sm,
   },
 });

@@ -1,10 +1,17 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useState,
+} from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Button } from '@/src/components/ui/Button';
 import { ListRow } from '@/src/components/ui/ListRow';
 import { Screen } from '@/src/components/ui/Screen';
+import { SectionHeader } from '@/src/components/ui/SectionHeader';
 import { Text } from '@/src/components/ui/Text';
 import { useStore } from '@/src/db/StoreContext';
 import { formatDateTime, formatDuration } from '@/src/domain/format';
@@ -17,6 +24,7 @@ export function SessionDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const store = useStore();
   const router = useRouter();
+  const navigation = useNavigation();
   const [session, setSession] = useState<Session | null>(null);
   const [drill, setDrill] = useState<Drill | null>(null);
   const [attempts, setAttempts] = useState<Attempt[]>([]);
@@ -33,6 +41,12 @@ export function SessionDetailScreen() {
     void load();
   }, [load]);
 
+  useLayoutEffect(() => {
+    if (session) {
+      navigation.setOptions({ title: 'Results' });
+    }
+  }, [navigation, session]);
+
   const summary = useMemo(() => {
     if (!drill) return null;
     return summarizeAttempts(drill.scoring, attempts);
@@ -47,28 +61,56 @@ export function SessionDetailScreen() {
   }
 
   return (
-    <Screen scroll>
+    <Screen
+      scroll
+      footer={
+        <>
+          <Button
+            label="Repeat this drill"
+            onPress={() => router.push(`/drill/${session.drillId}`)}
+          />
+          <Button
+            label="Practice another"
+            variant="secondary"
+            onPress={() => router.replace('/(tabs)/drills')}
+          />
+          <Button
+            label="Done"
+            variant="ghost"
+            onPress={() => {
+              if (router.canGoBack()) router.back();
+              else router.replace('/(tabs)');
+            }}
+          />
+        </>
+      }
+    >
       <Text variant="title">{session.drillName}</Text>
       <Text muted style={styles.meta}>
         {formatDateTime(session.startedAt)} ·{' '}
         {formatDuration(session.startedAt, session.endedAt)}
       </Text>
 
-      <Text variant="subtitle" style={styles.section}>
-        Score
+      <SectionHeader title="Score" />
+      <Text variant="subtitle">
+        {session.summaryScore ?? summary?.label ?? '—'}
       </Text>
-      <Text>{session.summaryScore ?? summary?.label ?? '—'}</Text>
       {summary ? (
         <Text muted style={styles.detail}>
           {summary.detail}
         </Text>
       ) : null}
 
-      <Text variant="subtitle" style={styles.section}>
-        Attempts
-      </Text>
+      <SectionHeader
+        title="Attempts"
+        subtitle={
+          attempts.length === 0
+            ? 'None logged'
+            : `${attempts.length} recorded`
+        }
+      />
       {attempts.length === 0 ? (
-        <Text muted>No attempts logged.</Text>
+        <Text muted>No attempts were logged for this session.</Text>
       ) : (
         attempts.map((attempt) => (
           <ListRow
@@ -81,19 +123,10 @@ export function SessionDetailScreen() {
 
       {session.notes ? (
         <>
-          <Text variant="subtitle" style={styles.section}>
-            Notes
-          </Text>
+          <SectionHeader title="Notes" />
           <Text>{session.notes}</Text>
         </>
       ) : null}
-
-      <View style={styles.cta}>
-        <Button
-          label="Repeat this drill"
-          onPress={() => router.push(`/drill/${session.drillId}`)}
-        />
-      </View>
     </Screen>
   );
 }
@@ -109,14 +142,7 @@ const styles = StyleSheet.create({
   meta: {
     marginTop: spacing.xs,
   },
-  section: {
-    marginTop: spacing.md,
-    marginBottom: spacing.xs,
-  },
   detail: {
     marginTop: spacing.xs,
-  },
-  cta: {
-    marginTop: spacing.lg,
   },
 });

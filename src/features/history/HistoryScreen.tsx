@@ -19,6 +19,7 @@ export function HistoryScreen() {
   const store = useStore();
   const router = useRouter();
   const [sessions, setSessions] = useState<Session[]>([]);
+  const [allCount, setAllCount] = useState(0);
   const [category, setCategory] = useState<DrillCategory | 'all'>('all');
   const [drillId, setDrillId] = useState<string | 'all'>('all');
   const [drillOptions, setDrillOptions] = useState<
@@ -26,15 +27,17 @@ export function HistoryScreen() {
   >([]);
 
   const refresh = useCallback(async () => {
-    const [rows, options] = await Promise.all([
+    const [rows, options, all] = await Promise.all([
       listHistory(store, {
         category,
         drillId: drillId === 'all' ? undefined : drillId,
       }),
       listHistoryDrillOptions(store),
+      listHistory(store),
     ]);
     setSessions(rows);
     setDrillOptions(options);
+    setAllCount(all.length);
   }, [store, category, drillId]);
 
   useFocusEffect(
@@ -48,45 +51,67 @@ export function HistoryScreen() {
     [drillOptions],
   );
 
+  const hasFilters = category !== 'all' || drillId !== 'all';
+  const clearFilters = useCallback(() => {
+    setCategory('all');
+    setDrillId('all');
+  }, []);
+
   return (
     <Screen scroll>
       <Text variant="title">History</Text>
+      {allCount > 0 ? (
+        <Text muted variant="secondary" style={styles.count}>
+          {hasFilters
+            ? `${sessions.length} of ${allCount} sessions`
+            : `${allCount} sessions`}
+        </Text>
+      ) : null}
+
       <View style={styles.filter}>
         <CategoryFilter value={category} onChange={setCategory} />
       </View>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.drillRow}
-      >
-        {filters.map((opt) => {
-          const selected = opt.id === drillId;
-          return (
-            <Pressable
-              key={opt.id}
-              onPress={() => setDrillId(opt.id)}
-              style={styles.drillChip}
-              accessibilityRole="button"
-              accessibilityState={{ selected }}
-            >
-              <Text
-                variant="secondary"
-                color={selected ? colors.accent : colors.textMuted}
-                style={selected ? styles.selected : undefined}
+      {drillOptions.length > 0 ? (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.drillRow}
+        >
+          {filters.map((opt) => {
+            const selected = opt.id === drillId;
+            return (
+              <Pressable
+                key={opt.id}
+                onPress={() => setDrillId(opt.id)}
+                style={styles.drillChip}
+                accessibilityRole="button"
+                accessibilityState={{ selected }}
               >
-                {opt.name}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </ScrollView>
+                <Text
+                  variant="secondary"
+                  color={selected ? colors.accent : colors.textMuted}
+                  style={selected ? styles.selected : undefined}
+                >
+                  {opt.name}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+      ) : null}
 
       {sessions.length === 0 ? (
         <EmptyState
-          title="No sessions yet"
-          message="Complete a drill to see it here."
-          actionLabel="Browse drills"
-          onAction={() => router.push('/(tabs)/drills')}
+          title={hasFilters ? 'No matching sessions' : 'No sessions yet'}
+          message={
+            hasFilters
+              ? 'Try clearing filters.'
+              : 'Complete a drill to see it here.'
+          }
+          actionLabel={hasFilters ? 'Clear filters' : 'Browse drills'}
+          onAction={
+            hasFilters ? clearFilters : () => router.push('/(tabs)/drills')
+          }
         />
       ) : (
         sessions.map((session) => (
@@ -110,6 +135,9 @@ export function HistoryScreen() {
 }
 
 const styles = StyleSheet.create({
+  count: {
+    marginTop: 2,
+  },
   filter: {
     marginTop: spacing.sm,
     marginBottom: spacing.xs,

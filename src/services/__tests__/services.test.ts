@@ -34,6 +34,15 @@ describe('services with memory store', () => {
     expect(search.some((d) => d.id === 'gate-putting-3ft')).toBe(true);
   });
 
+  it('re-runs bootstrap to refresh bundled drills', async () => {
+    const store = createMemoryStore();
+    await bootstrapApp(store);
+    const before = (await listDrills(store)).length;
+    await bootstrapApp(store);
+    expect((await listDrills(store)).length).toBe(before);
+    expect(await getDrill(store, 'clock-chipping')).not.toBeNull();
+  });
+
   it('runs session lifecycle, undo, and resume', async () => {
     const store = createMemoryStore();
     await bootstrapApp(store);

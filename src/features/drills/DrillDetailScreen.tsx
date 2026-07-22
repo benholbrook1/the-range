@@ -1,20 +1,27 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useState } from 'react';
+import {
+  useFocusEffect,
+  useLocalSearchParams,
+  useNavigation,
+  useRouter,
+} from 'expo-router';
+import React, { useCallback, useLayoutEffect, useState } from 'react';
 import { Alert, StyleSheet, View } from 'react-native';
 
 import { Button } from '@/src/components/ui/Button';
 import { Screen } from '@/src/components/ui/Screen';
+import { SectionHeader } from '@/src/components/ui/SectionHeader';
 import { Text } from '@/src/components/ui/Text';
 import { useStore } from '@/src/db/StoreContext';
 import { categoryLabel } from '@/src/domain/categories';
 import { describeScoring } from '@/src/domain/scoring';
-import type { Drill } from '@/src/domain/types';
+import type { Drill, Session } from '@/src/domain/types';
 import {
   getDrill,
   getLastScore,
   getPersonalBest,
 } from '@/src/services/drills';
 import {
+  completeSession,
   getActiveSession,
   startSession,
 } from '@/src/services/sessions';
@@ -24,15 +31,21 @@ export function DrillDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const store = useStore();
   const router = useRouter();
+  const navigation = useNavigation();
   const [drill, setDrill] = useState<Drill | null>(null);
   const [best, setBest] = useState<string | null>(null);
   const [last, setLast] = useState<string | null>(null);
+  const [active, setActive] = useState<Session | null>(null);
   const [starting, setStarting] = useState(false);
 
   const load = useCallback(async () => {
     if (!id) return;
-    const d = await getDrill(store, id);
+    const [d, activeSession] = await Promise.all([
+      getDrill(store, id),
+      getActiveSession(store),
+    ]);
     setDrill(d);
+    setActive(activeSession);
     if (d) {
       const [pb, ls] = await Promise.all([
         getPersonalBest(store, d.id),
@@ -43,42 +56,66 @@ export function DrillDetailScreen() {
     }
   }, [id, store]);
 
-  useEffect(() => {
-    void load();
-  }, [load]);
+  useFocusEffect(
+    useCallback(() => {
+      void load();
+    }, [load]),
+  );
+
+  useLayoutEffect(() => {
+    if (drill) {
+      navigation.setOptions({ title: drill.name });
+    }
+  }, [navigation, drill]);
+
+  const goActive = useCallback(
+    (sessionId: string) => {
+      router.push({
+        pathname: '/session/active',
+        params: { sessionId },
+      });
+    },
+    [router],
+  );
 
   const begin = useCallback(
     async (discardActive?: boolean) => {
       if (!drill) return;
       const session = await startSession(store, drill.id, { discardActive });
-      router.push({
-        pathname: '/session/active',
-        params: { sessionId: session.id },
-      });
+      goActive(session.id);
     },
-    [drill, store, router],
+    [drill, store, goActive],
   );
 
-  const onStart = useCallback(async () => {
+  const onPrimary = useCallback(async () => {
     if (!drill) return;
     setStarting(true);
     try {
-      const active = await getActiveSession(store);
-      if (active) {
+      const current = await getActiveSession(store);
+      if (current && current.drillId === drill.id) {
+        goActive(current.id);
+        return;
+      }
+      if (current) {
         Alert.alert(
           'Session in progress',
-          `“${active.drillName}” is still active. Continue it, or discard it and start this drill.`,
+          `“${current.drillName}” is still active.`,
           [
             {
-              text: 'Continue',
-              onPress: () =>
-                router.push({
-                  pathname: '/session/active',
-                  params: { sessionId: active.id },
-                }),
+              text: 'Continue that session',
+              onPress: () => goActive(current.id),
             },
             {
-              text: 'Discard & start',
+              text: 'Save & start this',
+              onPress: () => {
+                void (async () => {
+                  await completeSession(store, current.id);
+                  await begin(false);
+                })();
+              },
+            },
+            {
+              text: 'Discard & start this',
               style: 'destructive',
               onPress: () => {
                 void begin(true);
@@ -98,7 +135,7 @@ export function DrillDetailScreen() {
     } finally {
       setStarting(false);
     }
-  }, [drill, store, router, begin]);
+  }, [drill, store, begin, goActive]);
 
   if (!drill) {
     return (
@@ -108,36 +145,39 @@ export function DrillDetailScreen() {
     );
   }
 
+  const sameActive = active?.drillId === drill.id;
+  const primaryLabel = sameActive ? 'Continue session' : 'Start practice';
+
   return (
-    <Screen scroll>
-      <Text variant="title">{drill.name}</Text>
+    <Screen
+      scroll
+      footer={
+        <Button label={primaryLabel} onPress={onPrimary} disabled={starting} />
+      }
+    >
       <Text muted style={styles.meta}>
         {categoryLabel(drill.category)} · {drill.estimatedMinutes} min
       </Text>
 
-      <Text variant="subtitle" style={styles.section}>
-        Setup
-      </Text>
+      <SectionHeader title="Setup" />
       {drill.instructions.map((line, index) => (
         <Text key={index} style={styles.instruction}>
           {index + 1}. {line}
         </Text>
       ))}
 
-      <Text variant="subtitle" style={styles.section}>
-        Scoring
-      </Text>
-      <Text muted>{describeScoring(drill.scoring)}</Text>
+      <SectionHeader
+        title="Scoring"
+        subtitle={describeScoring(drill.scoring)}
+      />
 
-      <Text muted style={styles.best}>
-        {best ? `Personal best: ${best}` : 'No personal best yet'}
-      </Text>
-      <Text muted>
-        {last ? `Last score: ${last}` : 'No previous score yet'}
-      </Text>
-
-      <View style={styles.cta}>
-        <Button label="Start" onPress={onStart} disabled={starting} />
+      <View style={styles.stats}>
+        <Text muted>
+          {best ? `Personal best: ${best}` : 'No personal best yet'}
+        </Text>
+        <Text muted>
+          {last ? `Last score: ${last}` : 'No previous score yet'}
+        </Text>
       </View>
     </Screen>
   );
@@ -145,19 +185,13 @@ export function DrillDetailScreen() {
 
 const styles = StyleSheet.create({
   meta: {
-    marginTop: spacing.xs,
-  },
-  section: {
-    marginTop: spacing.md,
     marginBottom: spacing.xs,
   },
   instruction: {
     marginBottom: spacing.xs,
   },
-  best: {
+  stats: {
     marginTop: spacing.md,
-  },
-  cta: {
-    marginTop: spacing.lg,
+    gap: spacing.xs,
   },
 });

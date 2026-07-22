@@ -80,6 +80,38 @@
         "type": "score_total",
         "unit": "tempo points"
       }
+    },
+    {
+      "id": "clock-chipping",
+      "name": "Clock Face Chipping",
+      "category": "short_game",
+      "estimatedMinutes": 12,
+      "instructions": [
+        "Imagine a clock around the hole. Chip from 12, 3, 6, and 9 o’clock.",
+        "Hit 3 chips from each station (12 total).",
+        "Count how many finish inside a 6-foot circle."
+      ],
+      "scoring": {
+        "type": "makes_out_of",
+        "attempts": 12,
+        "unit": "chips"
+      }
+    },
+    {
+      "id": "distance-ladder-wedges",
+      "name": "Wedge Distance Ladder",
+      "category": "full_swing",
+      "estimatedMinutes": 15,
+      "instructions": [
+        "Pick three landing distances (e.g. 40, 60, 80 yards or meters).",
+        "Hit 5 balls to each distance focusing on carry control.",
+        "Log total quality reps across the ladder."
+      ],
+      "scoring": {
+        "type": "reps",
+        "target": 15,
+        "unit": "shots"
+      }
     }
   ]
 }
