@@ -12,6 +12,7 @@ import {
 } from '@/src/domain/categories';
 import { formatRelativeDay } from '@/src/domain/format';
 import type { DrillCategory, Session } from '@/src/domain/types';
+import { formatDifferential } from '@/src/services/handicap';
 import { listHistory } from '@/src/services/sessions';
 import { colors, spacing } from '@/src/theme';
 
@@ -138,7 +139,7 @@ export function HistoryScreen() {
                       <Text muted variant="secondary">
                         {categoryLabel(session.drillCategory)}
                         {session.differential != null
-                          ? ` · diff ${session.differential > 0 ? '+' : ''}${session.differential.toFixed(1)}`
+                          ? ` · diff ${formatDifferential(session.differential)}`
                           : ''}
                       </Text>
                     </View>
