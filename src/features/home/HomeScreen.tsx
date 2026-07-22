@@ -10,12 +10,8 @@ import { formatRelativeDay } from '@/src/domain/format';
 import { getLastCompletedSession } from '@/src/services/drills';
 import { getSettings } from '@/src/services/settings';
 import { getActiveSession } from '@/src/services/sessions';
-import { spacing } from '@/src/theme';
+import { colors, spacing } from '@/src/theme';
 
-/**
- * Home = one composition: brand, status, one primary action.
- * Resume or repeat is secondary — never a link farm.
- */
 export function HomeScreen() {
   const store = useStore();
   const router = useRouter();
@@ -62,48 +58,35 @@ export function HomeScreen() {
   );
 
   const status = (() => {
-    if (active) {
-      return displayName
-        ? `${displayName} · session in progress`
-        : 'Session in progress';
-    }
+    if (active) return active.drillName;
     if (last) {
       const when = formatRelativeDay(last.startedAt);
-      const score = last.summaryScore ? ` · ${last.summaryScore}` : '';
-      return displayName
-        ? `${displayName} · last practiced ${when}${score}`
-        : `Last practiced ${when}${score}`;
+      return last.summaryScore
+        ? `${last.drillName} · ${last.summaryScore} · ${when}`
+        : `${last.drillName} · ${when}`;
     }
-    return displayName
-      ? `${displayName} · ready to practice`
-      : 'Ready to practice';
+    return displayName ? `Welcome, ${displayName}` : 'Practice starts here';
   })();
 
-  return (
-    <Screen>
-      <View style={styles.hero}>
-        <Text variant="brand">The Range</Text>
-        <Text muted style={styles.status}>
-          {status}
-        </Text>
-      </View>
+  const eyebrow = active
+    ? 'In progress'
+    : last
+      ? 'Last session'
+      : 'The practice notebook';
 
-      <View style={styles.actions}>
-        {active ? (
-          <>
-            <Button
-              label="Continue session"
-              onPress={() =>
-                router.push({
-                  pathname: '/session/active',
-                  params: { sessionId: active.id },
-                })
-              }
-            />
-            <Text muted variant="secondary" style={styles.caption}>
-              {active.drillName}
-            </Text>
-          </>
+  return (
+    <Screen
+      footer={
+        active ? (
+          <Button
+            label="Continue session"
+            onPress={() =>
+              router.push({
+                pathname: '/session/active',
+                params: { sessionId: active.id },
+              })
+            }
+          />
         ) : (
           <>
             <Button
@@ -112,39 +95,54 @@ export function HomeScreen() {
             />
             {last ? (
               <Button
-                label="Repeat last drill"
+                label={`Repeat ${last.drillName}`}
                 variant="secondary"
                 onPress={() => router.push(`/drill/${last.drillId}`)}
               />
-            ) : (
-              <Text muted variant="secondary" style={styles.caption}>
-                Pick a drill, then tap Start
-              </Text>
-            )}
+            ) : null}
           </>
-        )}
+        )
+      }
+    >
+      <View style={styles.stage}>
+        <Text variant="secondary" color={colors.accent} style={styles.eyebrow}>
+          {eyebrow}
+        </Text>
+        <Text variant="brandHero" style={styles.brand}>
+          The Range
+        </Text>
+        <View style={styles.rule} />
+        <Text muted style={styles.status}>
+          {status}
+        </Text>
       </View>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  hero: {
-    flexGrow: 1,
-    justifyContent: 'flex-end',
-    paddingBottom: spacing.lg,
-    minHeight: 220,
+  stage: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingBottom: spacing.xl,
+  },
+  eyebrow: {
+    marginBottom: spacing.sm,
+    fontFamily: 'DMSans_700Bold',
+    letterSpacing: 0.4,
+  },
+  brand: {
+    marginBottom: spacing.md,
+  },
+  rule: {
+    width: 48,
+    height: 3,
+    backgroundColor: colors.accent,
+    marginBottom: spacing.md,
   },
   status: {
-    marginTop: spacing.sm,
-    maxWidth: 320,
-  },
-  actions: {
-    gap: spacing.sm,
-    paddingBottom: spacing.md,
-  },
-  caption: {
-    textAlign: 'center',
-    marginTop: spacing.xs,
+    maxWidth: 300,
+    fontSize: 17,
+    lineHeight: 24,
   },
 });

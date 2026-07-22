@@ -30,6 +30,12 @@ export const typography = {
     fontFamily: 'DMSans_700Bold',
     letterSpacing: -0.5,
   },
+  brandHero: {
+    fontSize: 56,
+    lineHeight: 60,
+    fontFamily: 'DMSans_700Bold',
+    letterSpacing: -1.2,
+  },
   title: {
     fontSize: 28,
     lineHeight: 34,
@@ -55,6 +61,12 @@ export const typography = {
     fontSize: 16,
     lineHeight: 20,
     fontFamily: 'DMSans_700Bold',
+  },
+  score: {
+    fontSize: 22,
+    lineHeight: 28,
+    fontFamily: 'DMSans_700Bold',
+    letterSpacing: -0.3,
   },
 } as const;
 

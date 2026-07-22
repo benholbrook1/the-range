@@ -7,7 +7,16 @@ import {
 
 import { colors, typography } from '@/src/theme';
 
-type Variant = 'brand' | 'title' | 'subtitle' | 'body' | 'secondary' | 'button';
+type Variant =
+  | 'brand'
+  | 'brandHero'
+  | 'title'
+  | 'subtitle'
+  | 'body'
+  | 'secondary'
+  | 'button'
+  | 'score';
+
 
 type Props = RNTextProps & {
   variant?: Variant;

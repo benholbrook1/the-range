@@ -2,11 +2,14 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { CategoryFilter } from '@/src/components/drills/CategoryFilter';
 import { EmptyState } from '@/src/components/ui/EmptyState';
 import { Screen } from '@/src/components/ui/Screen';
 import { Text } from '@/src/components/ui/Text';
 import { useStore } from '@/src/db/StoreContext';
+import {
+  ALL_CATEGORIES,
+  categoryLabel,
+} from '@/src/domain/categories';
 import { formatRelativeDay } from '@/src/domain/format';
 import type { DrillCategory, Session } from '@/src/domain/types';
 import { listHistory } from '@/src/services/sessions';
@@ -31,29 +34,6 @@ function groupByDay(sessions: Session[]): DayGroup[] {
   }));
 }
 
-function HistoryRow({
-  session,
-  onPress,
-}: {
-  session: Session;
-  onPress: () => void;
-}) {
-  return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="button"
-      style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
-    >
-      <Text variant="body" style={styles.rowText}>
-        {session.drillName}
-      </Text>
-      <Text variant="subtitle" style={styles.score}>
-        {session.summaryScore ?? '—'}
-      </Text>
-    </Pressable>
-  );
-}
-
 export function HistoryScreen() {
   const store = useStore();
   const router = useRouter();
@@ -75,25 +55,44 @@ export function HistoryScreen() {
   const hasFilter = category !== 'all';
 
   return (
-    <Screen scroll>
-      <View style={styles.header}>
-        <Text variant="title">History</Text>
-        <Text muted style={styles.lede}>
-          Your practice log
-        </Text>
-      </View>
+    <Screen scroll style={styles.page}>
+      <Text variant="brand" style={styles.title}>
+        Log
+      </Text>
 
-      <View style={styles.filter}>
-        <CategoryFilter value={category} onChange={setCategory} />
+      <View style={styles.filters}>
+        {ALL_CATEGORIES.map((cat) => {
+          const selected = cat === category;
+          return (
+            <Pressable
+              key={cat}
+              onPress={() => setCategory(cat)}
+              style={styles.filterItem}
+              accessibilityRole="button"
+              accessibilityState={{ selected }}
+            >
+              <Text
+                variant="secondary"
+                color={selected ? colors.accent : colors.textMuted}
+                style={[
+                  styles.filterLabel,
+                  selected ? styles.filterLabelOn : null,
+                ]}
+              >
+                {categoryLabel(cat)}
+              </Text>
+            </Pressable>
+          );
+        })}
       </View>
 
       {sessions.length === 0 ? (
         <EmptyState
-          title={hasFilter ? 'Nothing in this category' : 'No sessions yet'}
+          title={hasFilter ? 'Nothing here yet' : 'No practice logged'}
           message={
             hasFilter
-              ? 'Try another category, or clear the filter.'
-              : 'Finish a drill and it will show up here.'
+              ? 'Switch category, or clear to All.'
+              : 'Complete a drill and your scores land here.'
           }
           actionLabel={hasFilter ? 'Show all' : 'Find a drill'}
           onAction={
@@ -105,15 +104,27 @@ export function HistoryScreen() {
       ) : (
         groups.map((group) => (
           <View key={group.label} style={styles.group}>
-            <Text variant="secondary" muted style={styles.day}>
-              {group.label}
-            </Text>
+            <Text style={styles.day}>{group.label}</Text>
             {group.sessions.map((session) => (
-              <HistoryRow
+              <Pressable
                 key={session.id}
-                session={session}
                 onPress={() => router.push(`/session/${session.id}`)}
-              />
+                accessibilityRole="button"
+                style={({ pressed }) => [
+                  styles.row,
+                  pressed && styles.rowPressed,
+                ]}
+              >
+                <View style={styles.rowMain}>
+                  <Text variant="subtitle">{session.drillName}</Text>
+                  <Text muted variant="secondary">
+                    {categoryLabel(session.drillCategory)}
+                  </Text>
+                </View>
+                <Text variant="score" color={colors.accent}>
+                  {session.summaryScore ?? '—'}
+                </Text>
+              </Pressable>
             ))}
           </View>
         ))
@@ -123,40 +134,52 @@ export function HistoryScreen() {
 }
 
 const styles = StyleSheet.create({
-  header: {
-    marginBottom: spacing.sm,
-    gap: spacing.xs,
+  page: {
+    paddingTop: spacing.md,
   },
-  lede: {
-    maxWidth: 280,
-  },
-  filter: {
+  title: {
     marginBottom: spacing.md,
+  },
+  filters: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+    marginBottom: spacing.lg,
+  },
+  filterItem: {
+    minHeight: 40,
+    justifyContent: 'center',
+  },
+  filterLabel: {
+    fontSize: 15,
+  },
+  filterLabelOn: {
+    fontFamily: 'DMSans_700Bold',
+    textDecorationLine: 'underline',
   },
   group: {
-    marginBottom: spacing.md,
+    marginBottom: spacing.lg,
   },
   day: {
+    fontFamily: 'DMSans_700Bold',
+    fontSize: 15,
+    lineHeight: 20,
+    color: colors.text,
     marginBottom: spacing.xs,
   },
   row: {
-    minHeight: 56,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     gap: spacing.sm,
-    paddingVertical: spacing.xs,
+    paddingVertical: spacing.sm,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.border,
   },
   rowPressed: {
-    opacity: 0.7,
+    opacity: 0.65,
   },
-  rowText: {
+  rowMain: {
     flex: 1,
-  },
-  score: {
-    fontFamily: 'DMSans_700Bold',
-    color: colors.text,
+    gap: 2,
   },
 });
