@@ -91,15 +91,18 @@ export default function RootLayout() {
             headerShadowVisible: false,
             headerStyle: { backgroundColor: colors.bg },
             headerTintColor: colors.accent,
+            headerTitleStyle: { fontFamily: 'DMSans_700Bold', color: colors.text },
             contentStyle: { backgroundColor: colors.bg },
+            headerBackTitle: 'Back',
+            headerBackButtonDisplayMode: 'minimal',
           }}
         >
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="drill/[id]" options={{ title: 'Drill' }} />
           <Stack.Screen
-            name="session/active"
-            options={{ title: 'Session', headerBackTitle: 'Back' }}
+            name="(tabs)"
+            options={{ headerShown: false, title: 'Home' }}
           />
+          <Stack.Screen name="drill/[id]" options={{ title: 'Drill' }} />
+          <Stack.Screen name="session/active" options={{ title: 'Session' }} />
           <Stack.Screen name="session/[id]" options={{ title: 'Session' }} />
         </Stack>
       </StoreProvider>

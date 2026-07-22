@@ -1,23 +1,25 @@
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { Tabs } from 'expo-router';
 import React from 'react';
 
 import { colors } from '@/src/theme';
 
-function TabIcon({
-  name,
-  color,
-}: {
-  name: keyof typeof Ionicons.glyphMap;
-  color: string;
-}) {
-  return <Ionicons name={name} size={22} color={color} />;
-}
+type IconName = React.ComponentProps<typeof Ionicons>['name'];
+
+const TAB_ICONS: Record<
+  string,
+  { active: IconName; inactive: IconName }
+> = {
+  index: { active: 'home', inactive: 'home-outline' },
+  drills: { active: 'golf', inactive: 'golf-outline' },
+  history: { active: 'time', inactive: 'time-outline' },
+  more: { active: 'menu', inactive: 'menu-outline' },
+};
 
 export default function TabLayout() {
   return (
     <Tabs
-      screenOptions={{
+      screenOptions={({ route }) => ({
         headerShown: false,
         tabBarActiveTintColor: colors.accent,
         tabBarInactiveTintColor: colors.textMuted,
@@ -29,47 +31,25 @@ export default function TabLayout() {
           fontFamily: 'DMSans_500Medium',
           fontSize: 12,
         },
-      }}
-    >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => (
-            <TabIcon name="home-outline" color={String(color)} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="drills"
-        options={{
-          title: 'Drills',
-          tabBarIcon: ({ color }) => (
-            <TabIcon name="golf-outline" color={String(color)} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="history"
-        options={{
-          title: 'History',
-          tabBarIcon: ({ color }) => (
-            <TabIcon name="time-outline" color={String(color)} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="more"
-        options={{
-          title: 'More',
-          tabBarIcon: ({ color }) => (
-            <TabIcon
-              name="ellipsis-horizontal-outline"
-              color={String(color)}
+        tabBarIcon: ({ color, focused, size }) => {
+          const icons = TAB_ICONS[route.name] ?? {
+            active: 'ellipse' as IconName,
+            inactive: 'ellipse-outline' as IconName,
+          };
+          return (
+            <Ionicons
+              name={focused ? icons.active : icons.inactive}
+              size={focused ? size + 1 : size}
+              color={color}
             />
-          ),
-        }}
-      />
+          );
+        },
+      })}
+    >
+      <Tabs.Screen name="index" options={{ title: 'Home' }} />
+      <Tabs.Screen name="drills" options={{ title: 'Drills' }} />
+      <Tabs.Screen name="history" options={{ title: 'History' }} />
+      <Tabs.Screen name="more" options={{ title: 'More' }} />
     </Tabs>
   );
 }
