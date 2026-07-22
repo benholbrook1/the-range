@@ -25,22 +25,22 @@ export const radii = {
 
 export const typography = {
   brand: {
-    fontSize: 40,
-    lineHeight: 46,
-    fontFamily: 'DMSans_700Bold',
-    letterSpacing: -0.5,
+    fontSize: 44,
+    lineHeight: 48,
+    fontFamily: 'SpaceGrotesk_700Bold',
+    letterSpacing: -1,
   },
   brandHero: {
-    fontSize: 56,
-    lineHeight: 60,
-    fontFamily: 'DMSans_700Bold',
-    letterSpacing: -1.2,
+    fontSize: 72,
+    lineHeight: 74,
+    fontFamily: 'SpaceGrotesk_700Bold',
+    letterSpacing: -2.4,
   },
   title: {
     fontSize: 28,
     lineHeight: 34,
-    fontFamily: 'DMSans_700Bold',
-    letterSpacing: -0.3,
+    fontFamily: 'SpaceGrotesk_700Bold',
+    letterSpacing: -0.5,
   },
   subtitle: {
     fontSize: 18,
@@ -63,10 +63,10 @@ export const typography = {
     fontFamily: 'DMSans_700Bold',
   },
   score: {
-    fontSize: 22,
-    lineHeight: 28,
-    fontFamily: 'DMSans_700Bold',
-    letterSpacing: -0.3,
+    fontSize: 28,
+    lineHeight: 32,
+    fontFamily: 'SpaceGrotesk_700Bold',
+    letterSpacing: -0.6,
   },
 } as const;
 
