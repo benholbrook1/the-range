@@ -1,6 +1,6 @@
 import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Animated, Pressable, StyleSheet, View } from 'react-native';
+import { Animated, StyleSheet, View } from 'react-native';
 
 import { Button } from '@/src/components/ui/Button';
 import { Screen } from '@/src/components/ui/Screen';
@@ -8,7 +8,7 @@ import { Text } from '@/src/components/ui/Text';
 import { useStore } from '@/src/db/StoreContext';
 import { categoryLabel } from '@/src/domain/categories';
 import { formatRelativeDay } from '@/src/domain/format';
-import type { HandicapSnapshot } from '@/src/domain/handicap';
+import type { AreaHandicap, HandicapSnapshot } from '@/src/domain/handicap';
 import { getLastCompletedSession } from '@/src/services/drills';
 import {
   formatDifferential,
@@ -19,11 +19,16 @@ import { getSettings } from '@/src/services/settings';
 import { getActiveSession } from '@/src/services/sessions';
 import { colors, spacing } from '@/src/theme';
 
+const AREA_SHORT: Record<string, string> = {
+  putting: 'Putting',
+  short_game: 'Short',
+  full_swing: 'Full',
+};
+
 export function HomeScreen() {
   const store = useStore();
   const router = useRouter();
-  const brandOpacity = useRef(new Animated.Value(0)).current;
-  const boardOpacity = useRef(new Animated.Value(0)).current;
+  const enter = useRef(new Animated.Value(0)).current;
   const [displayName, setDisplayName] = useState('');
   const [handicap, setHandicap] = useState<HandicapSnapshot | null>(null);
   const [active, setActive] = useState<{
@@ -74,28 +79,37 @@ export function HomeScreen() {
   );
 
   useEffect(() => {
-    brandOpacity.setValue(0);
-    boardOpacity.setValue(0);
-    Animated.sequence([
-      Animated.timing(brandOpacity, {
-        toValue: 1,
-        duration: 280,
-        useNativeDriver: true,
-      }),
-      Animated.timing(boardOpacity, {
-        toValue: 1,
-        duration: 280,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, [brandOpacity, boardOpacity, handicap?.overall, active?.id]);
+    enter.setValue(0);
+    Animated.timing(enter, {
+      toValue: 1,
+      duration: 360,
+      useNativeDriver: true,
+    }).start();
+  }, [enter, handicap?.overall, active?.id, last?.drillId]);
 
-  const ratedCount =
-    handicap?.areas.filter((a) => a.index != null).length ?? 0;
+  const areas = handicap?.areas ?? [];
+  const hasIndex = handicap?.overall != null;
+
+  const support = (() => {
+    if (active) return `In progress · ${active.drillName}`;
+    if (last) {
+      const bits = [
+        last.drillName,
+        last.summaryScore,
+        formatRelativeDay(last.startedAt),
+      ].filter(Boolean);
+      const diff =
+        last.differential != null
+          ? ` · ${formatDifferential(last.differential)}`
+          : '';
+      return `${bits.join(' · ')}${diff}`;
+    }
+    if (displayName) return `Welcome back, ${displayName}`;
+    return 'Play a game. Your index starts here.';
+  })();
 
   return (
     <Screen
-      scroll
       style={styles.screen}
       footer={
         active ? (
@@ -125,194 +139,143 @@ export function HomeScreen() {
         )
       }
     >
-      <View style={styles.shell}>
-        <View style={styles.rail} />
-        <View style={styles.stage}>
-          <Animated.View style={{ opacity: brandOpacity }}>
-            <Text style={styles.mark} accessibilityRole="header">
-              The Range
-            </Text>
-            {displayName ? (
-              <Text muted style={styles.welcome}>
-                {displayName}
-              </Text>
-            ) : null}
-          </Animated.View>
-
-          <Animated.View style={[styles.board, { opacity: boardOpacity }]}>
-            <Text style={styles.kicker}>Handicap</Text>
-            {handicap?.overall != null ? (
-              <Text style={styles.overall} color={colors.accent}>
-                {formatHandicap(handicap.overall)}
-              </Text>
-            ) : (
-              <Text style={styles.overallMuted}>—</Text>
-            )}
-            <Text muted style={styles.overallHint}>
-              {ratedCount === 0
-                ? 'Play games to build your index'
-                : 'Overall · best recent form'}
-            </Text>
-
-            <View style={styles.areas}>
-              {(handicap?.areas ?? []).map((area) => (
-                <Pressable
-                  key={area.category}
-                  onPress={() => router.push('/(tabs)/drills')}
-                  accessibilityRole="button"
-                  style={({ pressed }) => [
-                    styles.areaRow,
-                    pressed && styles.areaPressed,
-                  ]}
-                >
-                  <View style={styles.areaText}>
-                    <Text variant="subtitle">{categoryLabel(area.category)}</Text>
-                    <Text muted variant="secondary">
-                      {area.rounds === 0
-                        ? 'No rounds yet'
-                        : `${area.rounds} round${area.rounds === 1 ? '' : 's'} · best ${area.usedCount}`}
-                    </Text>
-                  </View>
-                  <Text style={styles.areaIndex} color={colors.accent}>
-                    {area.index == null ? '—' : formatHandicap(area.index)}
-                  </Text>
-                </Pressable>
-              ))}
-            </View>
-          </Animated.View>
-
-          <Animated.View style={[styles.status, { opacity: boardOpacity }]}>
-            {active ? (
-              <>
-                <Text style={styles.kicker}>In progress</Text>
-                <Text style={styles.statusDetail}>{active.drillName}</Text>
-              </>
-            ) : last ? (
-              <>
-                <Text style={styles.kicker}>Last round</Text>
-                <Text style={styles.statusDetail}>
-                  {last.drillName}
-                  {last.summaryScore ? ` · ${last.summaryScore}` : ''}
-                  {` · ${formatRelativeDay(last.startedAt)}`}
-                </Text>
-                {last.differential != null ? (
-                  <Text muted style={styles.diffLine}>
-                    {last.categoryLabel} differential{' '}
-                    {formatDifferential(last.differential)}
-                  </Text>
-                ) : null}
-              </>
-            ) : (
-              <>
-                <Text style={styles.kicker}>Get started</Text>
-                <Text style={styles.statusDetail}>
-                  Each game posts a differential — just like golf.
-                </Text>
-              </>
-            )}
-          </Animated.View>
+      <Animated.View
+        style={[
+          styles.stage,
+          {
+            opacity: enter,
+            transform: [
+              {
+                translateY: enter.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [12, 0],
+                }),
+              },
+            ],
+          },
+        ]}
+      >
+        <View style={styles.brandBlock}>
+          <Text variant="brandHero" style={styles.brandLine}>
+            The
+          </Text>
+          <Text variant="brandHero" style={styles.brandLine}>
+            Range
+          </Text>
         </View>
-      </View>
+
+        <View style={styles.indexBlock}>
+          <Text muted style={styles.indexLabel}>
+            Your index
+          </Text>
+          <Text
+            style={[styles.indexValue, !hasIndex && styles.indexEmpty]}
+            color={hasIndex ? colors.text : colors.border}
+          >
+            {hasIndex ? formatHandicap(handicap!.overall!) : '—'}
+          </Text>
+        </View>
+
+        <View style={styles.rule} />
+
+        <View style={styles.areas}>
+          {areas.map((area) => (
+            <AreaColumn key={area.category} area={area} />
+          ))}
+        </View>
+
+        <Text muted style={styles.support}>
+          {support}
+        </Text>
+      </Animated.View>
     </Screen>
+  );
+}
+
+function AreaColumn({ area }: { area: AreaHandicap }) {
+  const rated = area.index != null;
+  return (
+    <View style={styles.areaCol}>
+      <Text
+        style={[styles.areaValue, !rated && styles.areaEmpty]}
+        color={rated ? colors.accent : colors.border}
+      >
+        {rated ? formatHandicap(area.index!) : '—'}
+      </Text>
+      <Text muted style={styles.areaLabel}>
+        {AREA_SHORT[area.category] ?? categoryLabel(area.category)}
+      </Text>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   screen: {
-    paddingHorizontal: 0,
-    paddingTop: 0,
-  },
-  shell: {
-    flexGrow: 1,
-    flexDirection: 'row',
-    minHeight: 520,
-  },
-  rail: {
-    width: 8,
-    backgroundColor: colors.accent,
+    paddingTop: spacing.sm,
   },
   stage: {
     flex: 1,
-    paddingHorizontal: spacing.pageX,
-    paddingTop: spacing.md,
-    paddingBottom: spacing.lg,
-    gap: spacing.lg,
+    justifyContent: 'center',
+    paddingBottom: spacing.md,
+    gap: spacing.md,
   },
-  mark: {
-    fontFamily: 'SpaceGrotesk_700Bold',
-    fontSize: 36,
-    lineHeight: 40,
-    letterSpacing: -1,
-    color: colors.text,
+  brandBlock: {
+    marginBottom: spacing.xs,
   },
-  welcome: {
-    marginTop: 4,
-    fontSize: 15,
+  brandLine: {
+    marginBottom: -8,
   },
-  board: {
-    gap: spacing.xs,
-  },
-  kicker: {
-    fontFamily: 'SpaceGrotesk_500Medium',
-    fontSize: 12,
-    lineHeight: 16,
-    letterSpacing: 1.2,
-    textTransform: 'uppercase',
-    color: colors.accent,
-  },
-  overall: {
-    fontFamily: 'SpaceGrotesk_700Bold',
-    fontSize: 64,
-    lineHeight: 68,
-    letterSpacing: -2,
-  },
-  overallMuted: {
-    fontFamily: 'SpaceGrotesk_700Bold',
-    fontSize: 64,
-    lineHeight: 68,
-    letterSpacing: -2,
-    color: colors.border,
-  },
-  overallHint: {
-    marginBottom: spacing.sm,
-  },
-  areas: {
-    borderTopWidth: 2,
-    borderTopColor: colors.accent,
-    marginTop: spacing.xs,
-  },
-  areaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: spacing.sm,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
-    gap: spacing.sm,
-  },
-  areaPressed: {
-    opacity: 0.65,
-  },
-  areaText: {
-    flex: 1,
+  indexBlock: {
     gap: 2,
   },
-  areaIndex: {
+  indexLabel: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
+    lineHeight: 20,
+  },
+  indexValue: {
+    fontFamily: 'SpaceGrotesk_700Bold',
+    fontSize: 56,
+    lineHeight: 60,
+    letterSpacing: -1.8,
+  },
+  indexEmpty: {
+    color: colors.border,
+  },
+  rule: {
+    height: 2,
+    width: 40,
+    backgroundColor: colors.accent,
+    marginVertical: spacing.xs,
+  },
+  areas: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+  },
+  areaCol: {
+    flex: 1,
+    gap: 4,
+  },
+  areaValue: {
     fontFamily: 'SpaceGrotesk_700Bold',
     fontSize: 28,
     lineHeight: 32,
     letterSpacing: -0.6,
   },
-  status: {
-    gap: 4,
-    paddingTop: spacing.xs,
+  areaEmpty: {
+    color: colors.border,
   },
-  statusDetail: {
+  areaLabel: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 17,
-    lineHeight: 24,
-    color: colors.text,
+    fontSize: 14,
+    lineHeight: 18,
   },
-  diffLine: {
-    marginTop: 2,
+  support: {
+    marginTop: spacing.sm,
+    fontSize: 16,
+    lineHeight: 22,
+    maxWidth: 320,
   },
 });
