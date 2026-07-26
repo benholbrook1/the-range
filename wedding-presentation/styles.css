@@ -9,6 +9,8 @@
   --mill-deep: #2f241c;
   --fairway: #2f5a3c;
   --fairway-deep: #1a3322;
+  --farm: #6b5344;
+  --farm-deep: #3a2d24;
   --accent: #c4783a;
   --line: rgba(26, 33, 28, 0.12);
   --white: #ffffff;
@@ -246,6 +248,10 @@ h2 {
   margin-top: 48px;
 }
 
+.idea-cards--four {
+  grid-template-columns: repeat(2, 1fr);
+}
+
 .idea-card {
   position: relative;
   min-height: 280px;
@@ -299,6 +305,10 @@ h2 {
 
 .idea-card--fairway::before {
   background-image: url("https://images.unsplash.com/photo-1520854221256-17451cc331bf?auto=format&fit=crop&w=1200&q=80");
+}
+
+.idea-card--farm::before {
+  background-image: url("https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1200&q=80");
 }
 
 .idea-num {
@@ -411,6 +421,10 @@ h2 {
   border-top-color: var(--fairway);
 }
 
+.slide--details[data-theme="farm"] .panel {
+  border-top-color: var(--farm);
+}
+
 .panel h3 {
   margin: 0 0 16px;
   font-family: var(--font-display);
@@ -490,6 +504,11 @@ h2 {
   padding: 16px 0;
   border-bottom: 1px solid var(--line);
   font-size: 0.95rem;
+}
+
+.compare-table--four .compare-row {
+  grid-template-columns: 1fr repeat(4, 1fr);
+  font-size: 0.88rem;
 }
 
 .compare-row > span:first-child {
@@ -636,6 +655,7 @@ h2 {
 @media (max-width: 900px) {
   .brief-grid,
   .idea-cards,
+  .idea-cards--four,
   .details-grid {
     grid-template-columns: 1fr;
   }
@@ -658,6 +678,10 @@ h2 {
 
   .compare-row {
     min-width: 720px;
+  }
+
+  .compare-table--four .compare-row {
+    min-width: 880px;
   }
 
   h2 {

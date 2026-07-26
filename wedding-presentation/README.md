@@ -1,12 +1,13 @@
-# Three Wedding Ideas — Waterloo × Burlington
+# Wedding Ideas — Waterloo × Burlington
 
-An interactive slide presentation with three wedding concepts for a ~130-guest celebration under **$40,000**, prioritizing packages that include food and strong guest vibes.
+An interactive slide presentation with wedding concepts for a ~130-guest celebration under **$40,000**, prioritizing packages that include food and strong guest vibes.
 
 ## Concepts
 
 1. **Lakeside Glow** — Marquis Gardens, Burlington  
 2. **Stone & Stream** — Ancaster Mill (midway)  
 3. **Fairway Golden Hour** — Grey Silo Golf Club, Waterloo  
+4. **Escarpment Farm** — Dyment’s Glen Drummond Farm, Dundas  
 
 ## View the presentation
 
