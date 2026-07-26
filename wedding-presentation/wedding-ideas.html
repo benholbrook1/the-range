@@ -1,0 +1,1250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Wedding Ideas · Waterloo × Burlington</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+:root {
+  --ink: #1a211c;
+  --ink-soft: #3d4a42;
+  --mist: #eef2ee;
+  --paper: #f5f7f4;
+  --lake: #1f5c63;
+  --lake-deep: #12383d;
+  --mill: #5c4636;
+  --mill-deep: #2f241c;
+  --fairway: #2f5a3c;
+  --fairway-deep: #1a3322;
+  --farm: #6b5344;
+  --farm-deep: #3a2d24;
+  --accent: #c4783a;
+  --line: rgba(26, 33, 28, 0.12);
+  --white: #ffffff;
+  --shadow: 0 24px 60px rgba(18, 28, 24, 0.18);
+  --font-display: "Fraunces", Georgia, serif;
+  --font-body: "Outfit", "Segoe UI", sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: var(--ink);
+  color: var(--ink);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.deck {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.slide {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(18px) scale(0.985);
+  transition:
+    opacity 0.55s ease,
+    transform 0.55s ease,
+    visibility 0.55s;
+  overflow: auto;
+}
+
+.slide.is-active {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateY(0) scale(1);
+}
+
+.slide-inner {
+  width: min(920px, calc(100% - 48px));
+  margin: 0 auto;
+  padding: clamp(72px, 12vh, 120px) 0 120px;
+}
+
+.slide-inner.wide {
+  width: min(1100px, calc(100% - 48px));
+}
+
+.eyebrow {
+  margin: 0 0 14px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+h1,
+h2,
+.brand {
+  font-family: var(--font-display);
+  font-weight: 550;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  margin: 0;
+}
+
+h2 {
+  font-size: clamp(2.4rem, 5vw, 3.8rem);
+  max-width: 14ch;
+}
+
+.brand {
+  font-size: clamp(3.2rem, 8vw, 6.4rem);
+  max-width: 12ch;
+}
+
+.lede {
+  margin: 22px 0 0;
+  font-size: clamp(1.05rem, 2vw, 1.3rem);
+  font-weight: 300;
+  line-height: 1.55;
+  max-width: 38ch;
+  color: var(--ink-soft);
+}
+
+.reveal {
+  opacity: 0;
+  transform: translateY(22px);
+  transition:
+    opacity 0.7s ease,
+    transform 0.7s ease;
+}
+
+.slide.is-active .reveal {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.delay-1 { transition-delay: 0.1s; }
+.delay-2 { transition-delay: 0.2s; }
+.delay-3 { transition-delay: 0.32s; }
+.delay-4 { transition-delay: 0.44s; }
+
+/* Hero */
+.slide--hero,
+.slide--close {
+  display: grid;
+  place-items: end start;
+  color: var(--white);
+}
+
+.hero-bg,
+.close-bg {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(120deg, rgba(18, 56, 61, 0.25), rgba(47, 90, 60, 0.15)),
+    url("https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?auto=format&fit=crop&w=2000&q=80")
+      center / cover no-repeat;
+  transform: scale(1.06);
+  transition: transform 8s ease;
+}
+
+.slide--hero.is-active .hero-bg,
+.slide--close.is-active .close-bg {
+  transform: scale(1);
+}
+
+.hero-veil,
+.close-veil {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(10, 18, 16, 0.25) 0%, rgba(10, 18, 16, 0.72) 70%, rgba(10, 18, 16, 0.88) 100%);
+}
+
+.hero-content,
+.close-content {
+  position: relative;
+  z-index: 1;
+  padding: clamp(40px, 8vw, 88px);
+  padding-bottom: 120px;
+  max-width: 900px;
+}
+
+.slide--hero .eyebrow,
+.slide--close .eyebrow,
+.slide--concept-hero .eyebrow {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.slide--hero .lede,
+.slide--close .lede,
+.slide--concept-hero .lede {
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.hero-meta {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 36px;
+  font-size: 0.92rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.hero-meta .dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+/* Brief */
+.slide--brief,
+.slide--menu,
+.slide--details,
+.slide--compare,
+.slide--reco {
+  background:
+    radial-gradient(1200px 600px at 10% -10%, rgba(31, 92, 99, 0.08), transparent 60%),
+    radial-gradient(900px 500px at 100% 0%, rgba(196, 120, 58, 0.08), transparent 55%),
+    var(--paper);
+}
+
+.brief-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 28px;
+  margin-top: 48px;
+}
+
+.brief-item h3 {
+  margin: 0 0 12px;
+  font-family: var(--font-display);
+  font-size: 1.45rem;
+  font-weight: 550;
+}
+
+.brief-item p {
+  margin: 0;
+  color: var(--ink-soft);
+  line-height: 1.55;
+  font-weight: 300;
+}
+
+/* Idea menu */
+.idea-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  margin-top: 48px;
+}
+
+.idea-cards--four {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.idea-card {
+  position: relative;
+  min-height: 280px;
+  padding: 28px 24px;
+  text-align: left;
+  color: var(--white);
+  border-radius: 4px;
+  overflow: hidden;
+  isolation: isolate;
+  box-shadow: var(--shadow);
+  transition: transform 0.35s ease, filter 0.35s ease;
+}
+
+.idea-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background-size: cover;
+  background-position: center;
+  transform: scale(1.04);
+  transition: transform 0.6s ease;
+}
+
+.idea-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.72));
+}
+
+.idea-card:hover,
+.idea-card:focus-visible {
+  transform: translateY(-6px);
+  outline: none;
+}
+
+.idea-card:hover::before,
+.idea-card:focus-visible::before {
+  transform: scale(1.1);
+}
+
+.idea-card--lake::before {
+  background-image: url("https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1200&q=80");
+}
+
+.idea-card--mill::before {
+  background-image: url("https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?auto=format&fit=crop&w=1200&q=80");
+}
+
+.idea-card--fairway::before {
+  background-image: url("https://images.unsplash.com/photo-1520854221256-17451cc331bf?auto=format&fit=crop&w=1200&q=80");
+}
+
+.idea-card--farm::before {
+  background-image: url("https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1200&q=80");
+}
+
+.idea-num {
+  display: block;
+  font-size: 0.8rem;
+  letter-spacing: 0.14em;
+  opacity: 0.75;
+  margin-bottom: 70px;
+}
+
+.idea-card h3 {
+  margin: 0 0 8px;
+  font-family: var(--font-display);
+  font-size: 1.7rem;
+  font-weight: 550;
+}
+
+.idea-card p {
+  margin: 0;
+  opacity: 0.85;
+  font-weight: 300;
+}
+
+.idea-tag {
+  display: inline-block;
+  margin-top: 22px;
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.45);
+  padding-bottom: 2px;
+}
+
+/* Concept heroes */
+.slide--concept-hero {
+  color: var(--white);
+}
+
+.concept-media {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgba(0, 0, 0, 0.2), transparent 50%),
+    var(--img) center / cover no-repeat;
+  transform: scale(1.05);
+  transition: transform 7s ease;
+}
+
+.slide--concept-hero.is-active .concept-media {
+  transform: scale(1);
+}
+
+.concept-veil {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(12, 18, 16, 0.82) 0%, rgba(12, 18, 16, 0.35) 55%, rgba(12, 18, 16, 0.2) 100%);
+}
+
+.concept-copy {
+  position: relative;
+  z-index: 1;
+  max-width: 640px;
+  padding: clamp(40px, 8vw, 88px);
+  padding-bottom: 120px;
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  height: 100%;
+}
+
+.slide--concept-hero h2 {
+  max-width: 12ch;
+  font-size: clamp(3rem, 7vw, 5.2rem);
+}
+
+/* Details */
+.details-head {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 32px;
+  align-items: end;
+  margin-bottom: 40px;
+}
+
+.details-summary {
+  margin: 0;
+  color: var(--ink-soft);
+  line-height: 1.55;
+  font-weight: 300;
+  font-size: 1.05rem;
+}
+
+.details-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.15fr;
+  gap: 18px;
+}
+
+.panel {
+  padding: 28px 24px;
+  background: rgba(255, 255, 255, 0.72);
+  border-top: 3px solid var(--lake);
+}
+
+.slide--details[data-theme="mill"] .panel {
+  border-top-color: var(--mill);
+}
+
+.slide--details[data-theme="fairway"] .panel {
+  border-top-color: var(--fairway);
+}
+
+.slide--details[data-theme="farm"] .panel {
+  border-top-color: var(--farm);
+}
+
+.panel h3 {
+  margin: 0 0 16px;
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 550;
+}
+
+.panel ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.panel li {
+  position: relative;
+  padding: 0 0 12px 16px;
+  color: var(--ink-soft);
+  line-height: 1.45;
+  font-weight: 300;
+}
+
+.panel li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.65em;
+  width: 6px;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.5;
+}
+
+.budget-rows {
+  display: grid;
+  gap: 10px;
+}
+
+.budget-rows div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--line);
+  font-size: 0.95rem;
+}
+
+.budget-rows span {
+  color: var(--ink-soft);
+  font-weight: 300;
+}
+
+.budget-rows strong {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.budget-note {
+  margin: 16px 0 0;
+  font-size: 0.84rem;
+  line-height: 1.45;
+  color: var(--ink-soft);
+  font-weight: 300;
+}
+
+/* Compare */
+.compare-table {
+  margin-top: 40px;
+  display: grid;
+  gap: 0;
+  border-top: 1px solid var(--line);
+}
+
+.compare-row {
+  display: grid;
+  grid-template-columns: 1.1fr repeat(3, 1fr);
+  gap: 12px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 0.95rem;
+}
+
+.compare-table--four .compare-row {
+  grid-template-columns: 1fr repeat(4, 1fr);
+  font-size: 0.88rem;
+}
+
+.compare-row > span:first-child {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.compare-row > span:not(:first-child) {
+  color: var(--ink-soft);
+  font-weight: 300;
+}
+
+.compare-head {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+}
+
+.compare-head span {
+  color: var(--ink) !important;
+  font-weight: 550 !important;
+}
+
+/* Reco */
+.reco-list {
+  margin: 48px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 28px;
+  counter-reset: reco;
+}
+
+.reco-list li {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 8px 20px;
+  counter-increment: reco;
+}
+
+.reco-list li::before {
+  content: counter(reco, decimal-leading-zero);
+  grid-row: 1 / span 2;
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+  color: var(--accent);
+  line-height: 1;
+  padding-top: 4px;
+}
+
+.reco-list strong {
+  font-family: var(--font-display);
+  font-size: 1.45rem;
+  font-weight: 550;
+}
+
+.reco-list span {
+  color: var(--ink-soft);
+  font-weight: 300;
+  line-height: 1.5;
+  max-width: 52ch;
+}
+
+/* Close */
+.close-bg {
+  background:
+    linear-gradient(120deg, rgba(47, 36, 28, 0.2), rgba(18, 56, 61, 0.25)),
+    url("https://images.unsplash.com/photo-1522673607200-164d1b6ce486?auto=format&fit=crop&w=2000&q=80")
+      center / cover no-repeat;
+}
+
+.close-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 28px;
+  margin-top: 36px;
+}
+
+.close-tags span {
+  font-size: 0.95rem;
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.4);
+  padding-bottom: 3px;
+}
+
+/* Chrome */
+.chrome {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 20;
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px 18px;
+  background: linear-gradient(180deg, transparent, rgba(10, 16, 14, 0.55));
+  color: var(--white);
+}
+
+.nav-btn {
+  width: 44px;
+  height: 44px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  backdrop-filter: blur(8px);
+  background: rgba(255, 255, 255, 0.08);
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.nav-btn:hover,
+.nav-btn:focus-visible {
+  background: rgba(255, 255, 255, 0.18);
+  transform: translateY(-1px);
+  outline: none;
+}
+
+.progress {
+  height: 2px;
+  background: rgba(255, 255, 255, 0.22);
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  width: 0%;
+  background: var(--accent);
+  transition: width 0.35s ease;
+}
+
+.counter {
+  margin: 0;
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  min-width: 4.5rem;
+  text-align: right;
+  opacity: 0.85;
+}
+
+/* Light slides: dark chrome text via overlay stays light because of gradient — ok */
+
+@media (max-width: 900px) {
+  .brief-grid,
+  .idea-cards,
+  .idea-cards--four,
+  .details-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .details-head {
+    grid-template-columns: 1fr;
+  }
+
+  .idea-card {
+    min-height: 220px;
+  }
+
+  .idea-num {
+    margin-bottom: 40px;
+  }
+
+  .compare-table {
+    overflow-x: auto;
+  }
+
+  .compare-row {
+    min-width: 720px;
+  }
+
+  .compare-table--four .compare-row {
+    min-width: 880px;
+  }
+
+  h2 {
+    max-width: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .slide-inner,
+  .slide-inner.wide {
+    width: calc(100% - 32px);
+    padding-top: 56px;
+  }
+
+  .hero-content,
+  .close-content,
+  .concept-copy {
+    padding: 28px 20px 110px;
+  }
+
+  .chrome {
+    gap: 10px;
+    padding: 12px 12px 14px;
+  }
+
+  .counter {
+    min-width: 3.5rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
+
+  </style>
+</head>
+<body>
+  <div class="deck" id="deck" aria-live="polite">
+
+    <!-- 0 · Title -->
+    <section class="slide slide--hero is-active" data-slide="0">
+      <div class="hero-bg" aria-hidden="true"></div>
+      <div class="hero-veil" aria-hidden="true"></div>
+      <div class="hero-content">
+        <p class="eyebrow reveal">Waterloo · Burlington · $40,000</p>
+        <h1 class="brand reveal delay-1">Wedding Ideas</h1>
+        <p class="lede reveal delay-2">Packages with food included. About 130 guests. Good vibes, guaranteed.</p>
+        <div class="hero-meta reveal delay-3">
+          <span>Scroll or use ← →</span>
+          <span class="dot"></span>
+          <span>4 concepts · 1 budget</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 1 · Brief -->
+    <section class="slide slide--brief" data-slide="1">
+      <div class="slide-inner">
+        <p class="eyebrow reveal">The brief</p>
+        <h2 class="reveal delay-1">What we’re planning for</h2>
+        <div class="brief-grid">
+          <article class="brief-item reveal delay-2">
+            <h3>Where you live</h3>
+            <p>One of you in Waterloo, one in Burlington — so each idea splits the difference or leans toward a home base.</p>
+          </article>
+          <article class="brief-item reveal delay-3">
+            <h3>The musts</h3>
+            <p>Food included in the package. Room for ~130 people. Atmosphere over formality — guests should feel the vibe.</p>
+          </article>
+          <article class="brief-item reveal delay-4">
+            <h3>The budget</h3>
+            <p>$40,000 all-in for venue + food + bar + photo + music + florals + the extras that make it feel like <em>you</em>.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2 · Menu of ideas -->
+    <section class="slide slide--menu" data-slide="2">
+      <div class="slide-inner">
+        <p class="eyebrow reveal">The shortlist</p>
+        <h2 class="reveal delay-1">Pick a mood</h2>
+        <div class="idea-cards idea-cards--four">
+          <button class="idea-card idea-card--lake" type="button" data-jump="3">
+            <span class="idea-num">01</span>
+            <h3>Lakeside Glow</h3>
+            <p>Marquis Gardens · Burlington</p>
+            <span class="idea-tag">Waterfront package</span>
+          </button>
+          <button class="idea-card idea-card--mill" type="button" data-jump="5">
+            <span class="idea-num">02</span>
+            <h3>Stone &amp; Stream</h3>
+            <p>Ancaster Mill · Midway</p>
+            <span class="idea-tag">Historic romance</span>
+          </button>
+          <button class="idea-card idea-card--fairway" type="button" data-jump="7">
+            <span class="idea-num">03</span>
+            <h3>Fairway Golden Hour</h3>
+            <p>Grey Silo · Waterloo</p>
+            <span class="idea-tag">Patio + good energy</span>
+          </button>
+          <button class="idea-card idea-card--farm" type="button" data-jump="9">
+            <span class="idea-num">04</span>
+            <h3>Escarpment Farm</h3>
+            <p>Dyment’s Glen Drummond · Dundas</p>
+            <span class="idea-tag">Barn + pie bar vibes</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3 · Idea 1 hero -->
+    <section class="slide slide--concept-hero" data-slide="3" data-theme="lake">
+      <div class="concept-media" style="--img:url('https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1800&q=80')"></div>
+      <div class="concept-veil"></div>
+      <div class="concept-copy">
+        <p class="eyebrow reveal">Idea 01 · Burlington</p>
+        <h2 class="reveal delay-1">Lakeside Glow</h2>
+        <p class="lede reveal delay-2">All-inclusive dinner packages on the water — easy logistics, sunset photos, and a room that already feels like a celebration.</p>
+      </div>
+    </section>
+
+    <!-- 4 · Idea 1 details -->
+    <section class="slide slide--details" data-slide="4" data-theme="lake">
+      <div class="slide-inner wide">
+        <div class="details-head">
+          <div>
+            <p class="eyebrow reveal">Marquis Gardens · Burlington</p>
+            <h2 class="reveal delay-1">Why this works</h2>
+          </div>
+          <p class="details-summary reveal delay-2">Built for package weddings: hors d’oeuvres, multi-course dinner, late-night table, and beverage service — so food is locked in from day one.</p>
+        </div>
+        <div class="details-grid">
+          <div class="panel reveal delay-2">
+            <h3>The vibe</h3>
+            <ul>
+              <li>Blue Water Ballroom — polished, bright, ready to party</li>
+              <li>Optional waterfront patio ceremony</li>
+              <li>~20–35 min from Burlington · ~70–85 min from Waterloo</li>
+              <li>Capacity well above 130 — room to dance</li>
+            </ul>
+          </div>
+          <div class="panel reveal delay-3">
+            <h3>What’s in the package</h3>
+            <ul>
+              <li>Ruby package from ~$105/person + HST</li>
+              <li>Passed hors d’oeuvres + 3-course dinner</li>
+              <li>Premium beverage service + wine at dinner</li>
+              <li>Late-night table included</li>
+            </ul>
+          </div>
+          <div class="panel panel--budget reveal delay-4">
+            <h3>Sample $40k split</h3>
+            <div class="budget-rows">
+              <div><span>Venue + food + bar package</span><strong>$22,500</strong></div>
+              <div><span>Photo + video</span><strong>$5,500</strong></div>
+              <div><span>DJ / MC</span><strong>$1,800</strong></div>
+              <div><span>Florals + décor</span><strong>$3,200</strong></div>
+              <div><span>Attire + rings buffer</span><strong>$3,500</strong></div>
+              <div><span>Cake, favors, misc</span><strong>$3,500</strong></div>
+            </div>
+            <p class="budget-note">Package math: ~$105–130/pp × 130 + ceremony + HST lands near $18–23k before vendors.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5 · Idea 2 hero -->
+    <section class="slide slide--concept-hero" data-slide="5" data-theme="mill">
+      <div class="concept-media" style="--img:url('https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?auto=format&fit=crop&w=1800&q=80')"></div>
+      <div class="concept-veil"></div>
+      <div class="concept-copy">
+        <p class="eyebrow reveal">Idea 02 · Midway</p>
+        <h2 class="reveal delay-1">Stone &amp; Stream</h2>
+        <p class="lede reveal delay-2">Ancaster Mill — waterfall views, timber beams, and farm-to-table dining halfway between both of you.</p>
+      </div>
+    </section>
+
+    <!-- 6 · Idea 2 details -->
+    <section class="slide slide--details" data-slide="6" data-theme="mill">
+      <div class="slide-inner wide">
+        <div class="details-head">
+          <div>
+            <p class="eyebrow reveal">Ancaster Mill · Ancaster</p>
+            <h2 class="reveal delay-1">Why this works</h2>
+          </div>
+          <p class="details-summary reveal delay-2">The romance is already in the architecture. Inclusive Pearle-style packages cover space, tables, staff, coordinator, and seasonal menus — you show up for the vibes.</p>
+        </div>
+        <div class="details-grid">
+          <div class="panel reveal delay-2">
+            <h3>The vibe</h3>
+            <ul>
+              <li>Stone mill beside a waterfall + streamside chapel</li>
+              <li>Governor’s Room seats ~130 — exact fit</li>
+              <li>~20 min from Burlington · ~55–70 min from Waterloo</li>
+              <li>Feels special without trying too hard</li>
+            </ul>
+          </div>
+          <div class="panel reveal delay-3">
+            <h3>What’s in the package</h3>
+            <ul>
+              <li>Event space, harvest tables, china &amp; staff</li>
+              <li>Lead event coordinator on the day</li>
+              <li>Farm-to-table / seasonal dinner menus</li>
+              <li>Ceremony option at Streamside Chapel</li>
+            </ul>
+          </div>
+          <div class="panel panel--budget reveal delay-4">
+            <h3>Sample $40k split</h3>
+            <div class="budget-rows">
+              <div><span>Venue + food + bar package</span><strong>$24,000</strong></div>
+              <div><span>Photo + video</span><strong>$5,000</strong></div>
+              <div><span>DJ / live trio cocktail hour</span><strong>$2,400</strong></div>
+              <div><span>Florals (lighter — venue carries)</span><strong>$2,600</strong></div>
+              <div><span>Attire + rings buffer</span><strong>$3,500</strong></div>
+              <div><span>Cake, shuttle, misc</span><strong>$2,500</strong></div>
+            </div>
+            <p class="budget-note">Similar Pearle venues often land ~$18–25k for 130 with dinner + bar depending on day/season.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7 · Idea 3 hero -->
+    <section class="slide slide--concept-hero" data-slide="7" data-theme="fairway">
+      <div class="concept-media" style="--img:url('https://images.unsplash.com/photo-1520854221256-17451cc331bf?auto=format&fit=crop&w=1800&q=80')"></div>
+      <div class="concept-veil"></div>
+      <div class="concept-copy">
+        <p class="eyebrow reveal">Idea 03 · Waterloo</p>
+        <h2 class="reveal delay-1">Fairway Golden Hour</h2>
+        <p class="lede reveal delay-2">Grey Silo Golf Club — patio overlooking the course, Timber Room for 130, and food that guests actually rave about.</p>
+      </div>
+    </section>
+
+    <!-- 8 · Idea 3 details -->
+    <section class="slide slide--details" data-slide="8" data-theme="fairway">
+      <div class="slide-inner wide">
+        <div class="details-head">
+          <div>
+            <p class="eyebrow reveal">Grey Silo Golf Club · Waterloo</p>
+            <h2 class="reveal delay-1">Why this works</h2>
+          </div>
+          <p class="details-summary reveal delay-2">Scenic without stiff. On-site catering (plated, buffet, stations), flexible bar options, and a wraparound deck that keeps the party outdoors until the stars show up.</p>
+        </div>
+        <div class="details-grid">
+          <div class="panel reveal delay-2">
+            <h3>The vibe</h3>
+            <ul>
+              <li>Timber Room — oak bar, beams, max 130</li>
+              <li>Patio over the Grand River / Rim Park views</li>
+              <li>~15–25 min from Waterloo · ~70–90 min from Burlington</li>
+              <li>Relaxed “best wedding I’ve been to” energy</li>
+            </ul>
+          </div>
+          <div class="panel reveal delay-3">
+            <h3>What’s in the package</h3>
+            <ul>
+              <li>Custom menus via on-site F&amp;B team</li>
+              <li>Buffet or plated + cocktail hour options</li>
+              <li>Late-night stations (yes, even poutine)</li>
+              <li>Room access the night before to decorate</li>
+            </ul>
+          </div>
+          <div class="panel panel--budget reveal delay-4">
+            <h3>Sample $40k split</h3>
+            <div class="budget-rows">
+              <div><span>Venue + food + bar</span><strong>$20,000</strong></div>
+              <div><span>Photo + video</span><strong>$5,500</strong></div>
+              <div><span>DJ + lighting</span><strong>$2,200</strong></div>
+              <div><span>Florals + décor</span><strong>$4,000</strong></div>
+              <div><span>Attire + rings buffer</span><strong>$3,500</strong></div>
+              <div><span>Cake, late-night, misc</span><strong>$4,800</strong></div>
+            </div>
+            <p class="budget-note">Typical Grey Silo wedding spend often cited ~$12–35k — leaves cushion for upgrades and guests from Burlington.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 9 · Idea 4 hero -->
+    <section class="slide slide--concept-hero" data-slide="9" data-theme="farm">
+      <div class="concept-media" style="--img:url('https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1800&q=80')"></div>
+      <div class="concept-veil"></div>
+      <div class="concept-copy">
+        <p class="eyebrow reveal">Idea 04 · Dundas (near Burlington)</p>
+        <h2 class="reveal delay-1">Escarpment Farm</h2>
+        <p class="lede reveal delay-2">Dyment’s Glen Drummond Farm — wagon rides, bonfire courtyard, pie bar, and barn dancing under Edison lights. Peak good vibes.</p>
+      </div>
+    </section>
+
+    <!-- 10 · Idea 4 details -->
+    <section class="slide slide--details" data-slide="10" data-theme="farm">
+      <div class="slide-inner wide">
+        <div class="details-head">
+          <div>
+            <p class="eyebrow reveal">Dyment’s Glen Drummond Farm · Dundas</p>
+            <h2 class="reveal delay-1">Why this works</h2>
+          </div>
+          <p class="details-summary reveal delay-2">Working family farm on the Niagara Escarpment with in-house catering locked into the package — appetizer boards, farm-fresh dinner, famous pie bar, late-night options (poutine truck), and a DJ often bundled with the venue.</p>
+        </div>
+        <div class="details-grid">
+          <div class="panel reveal delay-2">
+            <h3>The vibe</h3>
+            <ul>
+              <li>Three-sided barns + courtyard fire pits / s’mores</li>
+              <li>Ceremony at The Peak, Lawn, or Wagon Wheel Barn</li>
+              <li>~15 min from Burlington · ~55–70 min from Waterloo</li>
+              <li>Capacity up to ~200 — 130 feels spacious</li>
+              <li>Season: late May through October</li>
+            </ul>
+          </div>
+          <div class="panel reveal delay-3">
+            <h3>What’s in the package</h3>
+            <ul>
+              <li>Venue + ceremony site fees (day-dependent)</li>
+              <li>Catering ~$143/pp: boards, dinner, pie bar, coffee/tea</li>
+              <li>Bar service from ~$12/pp (alcohol/selections extra)</li>
+              <li>Tables, chairs, linens, staff, venue coordinator</li>
+              <li>Wagon rides + Dance Barn DJ commonly included</li>
+            </ul>
+          </div>
+          <div class="panel panel--budget reveal delay-4">
+            <h3>Sample $40k split</h3>
+            <div class="budget-rows">
+              <div><span>Venue + ceremony (Fri/Sun)</span><strong>$8,600</strong></div>
+              <div><span>Food (130 × ~$143)</span><strong>$18,600</strong></div>
+              <div><span>Bar service + alcohol buffer</span><strong>$3,600</strong></div>
+              <div><span>Photo (lean / no video)</span><strong>$4,500</strong></div>
+              <div><span>Florals (venue carries décor)</span><strong>$1,500</strong></div>
+              <div><span>Attire + misc / tax buffer</span><strong>$3,200</strong></div>
+            </div>
+            <p class="budget-note">2026-style math: Fri/Sun ~$1,950 ceremony + ~$6,650 venue + $143/pp + $12/pp bar ≈ $28.7k before alcohol &amp; tax. Saturday runs higher (~$29.8k). DJ-in-package helps the $40k fit — Friday/Sunday is the safer day.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 11 · Compare -->
+    <section class="slide slide--compare" data-slide="11">
+      <div class="slide-inner wide">
+        <p class="eyebrow reveal">Side by side</p>
+        <h2 class="reveal delay-1">How they stack up</h2>
+        <div class="compare-table compare-table--four reveal delay-2">
+          <div class="compare-row compare-head">
+            <span></span>
+            <span>Lakeside</span>
+            <span>Mill</span>
+            <span>Fairway</span>
+            <span>Farm</span>
+          </div>
+          <div class="compare-row">
+            <span>Location bias</span>
+            <span>Burlington</span>
+            <span>Midway</span>
+            <span>Waterloo</span>
+            <span>Near Burlington</span>
+          </div>
+          <div class="compare-row">
+            <span>Food package</span>
+            <span>Published packages</span>
+            <span>All-inclusive style</span>
+            <span>Custom F&amp;B</span>
+            <span>In-house + pie bar</span>
+          </div>
+          <div class="compare-row">
+            <span>Fit for 130</span>
+            <span>Easy</span>
+            <span>Exact</span>
+            <span>Exact</span>
+            <span>Easy (min 125 Sat)</span>
+          </div>
+          <div class="compare-row">
+            <span>Good-vibes score</span>
+            <span>Sunset dance floor</span>
+            <span>Wow-factor setting</span>
+            <span>Patio + late-night</span>
+            <span>Bonfire + barns</span>
+          </div>
+          <div class="compare-row">
+            <span>Venue portion est.</span>
+            <span>~$18–23k</span>
+            <span>~$20–25k</span>
+            <span>~$16–22k</span>
+            <span>~$29–33k</span>
+          </div>
+          <div class="compare-row">
+            <span>Best if you want…</span>
+            <span>Simple packages</span>
+            <span>Destination feel</span>
+            <span>Hometown energy</span>
+            <span>Rustic party night</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 12 · Recommendation -->
+    <section class="slide slide--reco" data-slide="12">
+      <div class="slide-inner">
+        <p class="eyebrow reveal">If we had to start somewhere</p>
+        <h2 class="reveal delay-1">A practical path</h2>
+        <ol class="reco-list">
+          <li class="reveal delay-2">
+            <strong>Book venue tastings</strong>
+            <span>Marquis Gardens + Ancaster Mill for easier $40k cushion. Tour Glen Drummond if you want maximum vibe and can lean Friday/Sunday + lighter photo/florals.</span>
+          </li>
+          <li class="reveal delay-3">
+            <strong>Hold budget by venue type</strong>
+            <span>~$22–24k venue day for lakeside/mill/fairway. ~$29–32k for the farm — still workable if DJ is included and décor stays minimal.</span>
+          </li>
+          <li class="reveal delay-4">
+            <strong>Protect the vibes</strong>
+            <span>Prioritize outdoor cocktail energy, a great dance floor, and late-night food. Glen Drummond already bakes that into the day.</span>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- 13 · Close -->
+    <section class="slide slide--close" data-slide="13">
+      <div class="close-bg" aria-hidden="true"></div>
+      <div class="close-veil" aria-hidden="true"></div>
+      <div class="close-content">
+        <p class="eyebrow reveal">Ready when you are</p>
+        <h2 class="brand reveal delay-1">Which vibe feels like you?</h2>
+        <p class="lede reveal delay-2">Lakeside · Mill · Fairway · Farm — all four fit ~130 guests with food packages, inside a $40,000 plan (farm works best Fri/Sun).</p>
+        <div class="close-tags reveal delay-3">
+          <span>Marquis Gardens</span>
+          <span>Ancaster Mill</span>
+          <span>Grey Silo</span>
+          <span>Glen Drummond Farm</span>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <nav class="chrome" aria-label="Presentation controls">
+    <button type="button" class="nav-btn" id="prevBtn" aria-label="Previous slide">←</button>
+    <div class="progress" aria-hidden="true"><div class="progress-bar" id="progressBar"></div></div>
+    <p class="counter"><span id="current">1</span> / <span id="total">12</span></p>
+    <button type="button" class="nav-btn" id="nextBtn" aria-label="Next slide">→</button>
+  </nav>
+
+  <script>
+(() => {
+  const slides = Array.from(document.querySelectorAll(".slide"));
+  const total = slides.length;
+  const currentEl = document.getElementById("current");
+  const totalEl = document.getElementById("total");
+  const progressBar = document.getElementById("progressBar");
+  const prevBtn = document.getElementById("prevBtn");
+  const nextBtn = document.getElementById("nextBtn");
+
+  let index = 0;
+  let touching = null;
+
+  totalEl.textContent = String(total);
+
+  function goTo(next) {
+    const clamped = Math.max(0, Math.min(total - 1, next));
+    if (clamped === index && slides[clamped].classList.contains("is-active")) {
+      updateChrome();
+      return;
+    }
+
+    slides[index]?.classList.remove("is-active");
+    index = clamped;
+    slides[index].classList.add("is-active");
+    slides[index].scrollTop = 0;
+    updateChrome();
+  }
+
+  function updateChrome() {
+    currentEl.textContent = String(index + 1);
+    progressBar.style.width = `${((index + 1) / total) * 100}%`;
+    prevBtn.disabled = index === 0;
+    nextBtn.disabled = index === total - 1;
+    prevBtn.style.opacity = index === 0 ? "0.4" : "1";
+    nextBtn.style.opacity = index === total - 1 ? "0.4" : "1";
+  }
+
+  prevBtn.addEventListener("click", () => goTo(index - 1));
+  nextBtn.addEventListener("click", () => goTo(index + 1));
+
+  document.querySelectorAll("[data-jump]").forEach((el) => {
+    el.addEventListener("click", () => {
+      const target = Number(el.getAttribute("data-jump"));
+      if (!Number.isNaN(target)) goTo(target);
+    });
+  });
+
+  window.addEventListener("keydown", (event) => {
+    if (event.key === "ArrowRight" || event.key === "PageDown" || event.key === " ") {
+      event.preventDefault();
+      goTo(index + 1);
+    }
+    if (event.key === "ArrowLeft" || event.key === "PageUp") {
+      event.preventDefault();
+      goTo(index - 1);
+    }
+    if (event.key === "Home") {
+      event.preventDefault();
+      goTo(0);
+    }
+    if (event.key === "End") {
+      event.preventDefault();
+      goTo(total - 1);
+    }
+  });
+
+  window.addEventListener(
+    "wheel",
+    (event) => {
+      if (Math.abs(event.deltaY) < 40) return;
+      const active = slides[index];
+      const atTop = active.scrollTop <= 0;
+      const atBottom = active.scrollTop + active.clientHeight >= active.scrollHeight - 2;
+      if (event.deltaY > 0 && atBottom) goTo(index + 1);
+      if (event.deltaY < 0 && atTop) goTo(index - 1);
+    },
+    { passive: true }
+  );
+
+  window.addEventListener(
+    "touchstart",
+    (event) => {
+      touching = event.changedTouches[0].clientX;
+    },
+    { passive: true }
+  );
+
+  window.addEventListener(
+    "touchend",
+    (event) => {
+      if (touching == null) return;
+      const dx = event.changedTouches[0].clientX - touching;
+      touching = null;
+      if (Math.abs(dx) < 50) return;
+      if (dx < 0) goTo(index + 1);
+      else goTo(index - 1);
+    },
+    { passive: true }
+  );
+
+  goTo(0);
+})();
+
+  </script>
+</body>
+</html>
